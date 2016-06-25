@@ -1,0 +1,39 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.be.tasktracker.CreatePattern"
+    android:id="@+id/create_pattern_container"
+    >
+   <LinearLayout
+       android:layout_width="match_parent"
+       android:layout_height="match_parent"
+       android:orientation="horizontal"
+       >
+    <!-- TODO: Update blank fragment layout -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <EditText
+            android:text="13/5/2015 10:31 PM"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/title"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="add"
+            android:id="@+id/Addbtn"
+            />
+    </LinearLayout>
+   <ListView
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:textAlignment="center"
+       tools:listitem="@layout/list_item"
+       >
+
+   </ListView>
+   </LinearLayout>
+</ScrollView>
