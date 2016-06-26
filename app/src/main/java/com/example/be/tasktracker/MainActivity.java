@@ -1,6 +1,7 @@
 package com.example.be.tasktracker;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -23,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
 
 
     }
-
+//Listener methods implementation
     @Override
     public void onHomeItemSelected(int itemNum) {
 
@@ -31,9 +32,12 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         switch (itemNum) {
             case CREATE_PATTERN:
-                fragmentTransaction.replace(R.id.container, new CreatePattern(), "CreatePatternFragment");
-                fragmentTransaction.addToBackStack(null);
-                fragmentTransaction.commit();
+                Intent intent=new Intent();
+                intent.setClass(mcontext,CreatePatternActivity.class);
+                startActivity(intent);
+                //fragmentTransaction.replace(R.id.container, new CreatePattern(), "CreatePatternFragment");
+                //fragmentTransaction.addToBackStack(null);
+                //fragmentTransaction.commit();
         }
 
     }
