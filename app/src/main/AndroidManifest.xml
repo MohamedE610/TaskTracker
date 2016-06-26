@@ -15,7 +15,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".CreatePatternActivity"></activity>
+        <activity android:name=".CreateProjectActivity"></activity>
     </application>
 
 </manifest>

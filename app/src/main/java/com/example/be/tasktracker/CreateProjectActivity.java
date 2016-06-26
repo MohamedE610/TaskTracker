@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class CreatePatternActivity extends AppCompatActivity {
+public class CreateProjectActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
