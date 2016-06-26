@@ -14,7 +14,7 @@
 
     <Button
         android:layout_height="wrap_content"
-        android:text="Create Pattern"
+        android:text="Create Project"
         android:id="@+id/create"
         android:layout_gravity="center_vertical|center_horizontal"
         android:layout_centerHorizontal="true"
@@ -26,7 +26,7 @@
         android:layout_gravity="center_vertical|center_horizontal"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:text="Load Pattern"
+        android:text="Load Project"
         android:id="@+id/load"
         android:layout_centerVertical="true"
         android:layout_marginTop="50dp"

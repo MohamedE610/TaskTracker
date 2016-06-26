@@ -1,7 +1,6 @@
 package com.example.be.tasktracker;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -32,7 +31,7 @@ public class CreateProjectFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         //onButtonClicked();
-        return inflater.inflate(R.layout.fragment_create_pattern, container, false);
+        return inflater.inflate(R.layout.fragment_create_project, container, false);
 
     }
 
