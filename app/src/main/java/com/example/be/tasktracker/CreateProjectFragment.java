@@ -99,7 +99,7 @@ public class CreateProjectFragment extends Fragment {
         LayoutInflater inflator = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View v = inflator.inflate(R.layout.edit_text_actionbar, null);
         editTextActionBar=(EditText)v.findViewById(R.id.edit_text_actionbar);
-        onButtonClicked();
+        handleActions();
 
         return rootView;
 
@@ -113,7 +113,7 @@ public class CreateProjectFragment extends Fragment {
         menu.add(0, v.getId(), 0, "Action 2");
         menu.add(0, v.getId(), 0, "Action 3");
     }
-    private void onButtonClicked() {
+    private void handleActions() {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
