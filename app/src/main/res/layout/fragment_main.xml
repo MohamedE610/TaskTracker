@@ -26,7 +26,7 @@
         android:layout_gravity="center_vertical|center_horizontal"
         android:layout_width="180dp"
         android:layout_height="wrap_content"
-        android:text="Load Project"
+        android:text="New Task"
         android:id="@+id/load"
         android:layout_centerVertical="true"
         android:layout_marginTop="50dp"

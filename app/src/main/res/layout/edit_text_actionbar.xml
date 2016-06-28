@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EditText xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="250dp"
+    android:layout_row="1"
+    android:id="@+id/edit_text_actionbar"
+    android:layout_height="match_parent"
+    android:layout_alignParentLeft="true">
+
+</EditText>

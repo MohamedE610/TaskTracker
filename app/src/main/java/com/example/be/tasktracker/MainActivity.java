@@ -31,9 +31,7 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
                 Intent intent=new Intent();
                 intent.setClass(mcontext,CreateProjectActivity.class);
                 startActivity(intent);
-                //fragmentTransaction.replace(R.id.container, new CreateProjectFragment(), "CreatePatternFragment");
-                //fragmentTransaction.addToBackStack(null);
-                //fragmentTransaction.commit();
+
         }
 
     }
