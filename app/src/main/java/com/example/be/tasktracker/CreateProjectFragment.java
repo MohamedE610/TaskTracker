@@ -59,7 +59,7 @@ public class CreateProjectFragment extends Fragment {
         registerForContextMenu(listView);
         LayoutInflater inflator = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View v = inflator.inflate(R.layout.edit_text_actionbar, null);
-        onButtonClicked();
+        handleActions();
 
         return rootView;
 
@@ -85,7 +85,7 @@ public class CreateProjectFragment extends Fragment {
         return super.onContextItemSelected(item);
     }
 
-    private void onButtonClicked() {
+    private void handleActions() {
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
