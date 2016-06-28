@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 
 
@@ -27,53 +28,13 @@ public class CreateProjectFragment extends Fragment {
     // TODO: Rename parameter arguments, choose  names that match
     private Button addBtn,saveBtn;
     private EditText titleTxt,subtaskTxt;
-    private EditText editTextActionBar;
     private  ListView listView;
     private ArrayAdapter<String>arrayAdapter;
     private ArrayList<String> listItems;
-    private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
+    private final int EDIT_ITEM_ID=2;
+    private final int DELETE_ITEM_ID=1;
+    private int selectedItem;
 
-
-
-
-        // Called when the action mode is created; startActionMode() was called
-        @Override
-        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-            // Inflate a menu resource providing context menu items
-            MenuInflater inflater = mode.getMenuInflater();
-            inflater.inflate(R.menu.context_menu, menu);
-
-
-
-
-
-            //menu.getItem(3);
-            return true;
-        }
-
-        @Override
-        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-            return false;
-        }
-
-        @Override
-        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            System.out.println("Fuck Item Clicked");
-            editTextActionBar.setText("this is the new");
-            switch (item.getItemId()){
-                case R.id.action_done:
-
-
-
-            }
-            return false;
-        }
-
-        @Override
-        public void onDestroyActionMode(ActionMode mode) {
-
-        }
-    };
 
         @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -98,7 +59,6 @@ public class CreateProjectFragment extends Fragment {
         registerForContextMenu(listView);
         LayoutInflater inflator = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View v = inflator.inflate(R.layout.edit_text_actionbar, null);
-        editTextActionBar=(EditText)v.findViewById(R.id.edit_text_actionbar);
         onButtonClicked();
 
         return rootView;
@@ -108,18 +68,29 @@ public class CreateProjectFragment extends Fragment {
     public void onCreateContextMenu(ContextMenu menu, View v,
                                     ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        menu.setHeaderTitle("Context Menu");
-        menu.add(0, v.getId(), 0, "Action 1");
-        menu.add(0, v.getId(), 0, "Action 2");
-        menu.add(0, v.getId(), 0, "Action 3");
+        menu.add(0, 1, 1, "Delete");
+        menu.add(0, 2, 2, "Edit");
+
     }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        System.out.println("Fuck method in ");
+        if (item.getItemId()==DELETE_ITEM_ID){
+            arrayAdapter.remove(arrayAdapter.getItem(selectedItem));
+        }
+        else if(item.getItemId()==EDIT_ITEM_ID){
+            System.out.println("Edit clicked");
+        }
+        return super.onContextItemSelected(item);
+    }
+
     private void onButtonClicked() {
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                getActivity().startActionMode( mActionModeCallback);
-
-
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                selectedItem=position;
+                return false;
             }
         });
         if(titleTxt.getText().toString().length()==0)
