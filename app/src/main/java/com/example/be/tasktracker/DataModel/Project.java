@@ -47,13 +47,12 @@ public class Project {
     public void setProjectName(String projectName) {
         this.projectName = projectName;
     }
-    public  JSONObject convertToJsonObject() throws JSONException {
-        JSONObject jsonObject=new JSONObject();
+/*        JSONObject jsonObject=new JSONObject();
         jsonObject.put(Project.PROJECT_NAME_KEY,getProjectName());
         jsonObject.put(PROJECT_SUBTASKS_KEY,getSubtasks());
         jsonObject.put(PROJECT_DATE_KEY,date);
         return jsonObject;
 
-    }
+    }*/
 
 }

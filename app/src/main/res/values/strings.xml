@@ -3,7 +3,8 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="action_delete">Dekete</string>
+    <string name="action_delete">Delete</string>
+    <string name="JSON_ARRAY_KEY">values</string>
     <string name="action_edit">Edit</string>
     <string name="projects_file_name">com.example.tasktracker.projectsfile</string>
 </resources>

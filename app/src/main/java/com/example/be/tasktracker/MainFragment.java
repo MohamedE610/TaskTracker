@@ -1,7 +1,6 @@
 package com.example.be.tasktracker;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -41,19 +40,19 @@ public class MainFragment extends Fragment {
         createPatternBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onHomeItemSelected(OnFragmentInteractionListener.CREATE_PATTERN);
+                mListener.onHomeItemSelected(OnFragmentInteractionListener.CREATE_PROJECT);
             }
         });
         loadPatternBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onHomeItemSelected(OnFragmentInteractionListener.LOAD_PATTERN);
+                mListener.onHomeItemSelected(OnFragmentInteractionListener.NEW_TASK);
             }
         });
         statisticsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onHomeItemSelected(OnFragmentInteractionListener.STATISICS);
+                mListener.onHomeItemSelected(OnFragmentInteractionListener.STATISTICS);
             }
         });
 

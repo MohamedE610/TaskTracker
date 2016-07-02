@@ -25,6 +25,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.example.be.tasktracker.DataModel.HandleData;
 import com.example.be.tasktracker.DataModel.Project;
 
 import org.json.JSONArray;
@@ -59,8 +60,7 @@ public class CreateProjectFragment extends Fragment {
     private boolean fileExist;
     private Project project;
     private File file;
-    private ArrayList<String> existingProjects;
-    private final String JSON_ARRAY_KEY = "PROJECTS";
+    private ArrayList<String> existingProjects=new ArrayList<>();
     private boolean saved = false;
 
     @Override
@@ -85,7 +85,7 @@ public class CreateProjectFragment extends Fragment {
         listView.setAdapter(arrayAdapter);
         registerForContextMenu(listView);
         LayoutInflater inflator = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View v = inflator.inflate(R.layout.edit_text_actionbar, null);
+      //  View v = inflator.inflate(R.layout.edit_text_actionbar, null);
         handleActions();
 
         return rootView;
@@ -97,33 +97,16 @@ public class CreateProjectFragment extends Fragment {
     public void onStart() {
         super.onStart();
         file = new File(getActivity().getFilesDir(), getString(R.string.projects_file_name));
-        existingProjects = new ArrayList<>();
-        try {
-
-            if (file.exists()) {
-                fileExist = true;
-                StringBuilder jsonStr = new StringBuilder();
-                BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
-
-                String str = bufferedReader.readLine();
-                while (str != null) {
-                    jsonStr.append(str);
-                    str = bufferedReader.readLine();
-                }
-                bufferedReader.close();
-
-                jsonObject = new JSONObject(jsonStr.toString());
-                JSONArray tempJsArray = jsonObject.getJSONArray(JSON_ARRAY_KEY);
-                for (int i = 0; i < tempJsArray.length(); i++) {
-                    JSONObject jsTemp = tempJsArray.getJSONObject(i);
-                    existingProjects.add(jsTemp.getString(Project.PROJECT_NAME_KEY));
-                }
-            } else
-                fileExist = false;
-        } catch (Exception e) {
-            e.printStackTrace();
+        jsonObject=new JSONObject();
+        String jsonStr=HandleData.getProjectsJsonStr(getActivity(),file);
+        if(jsonStr!=null){
+            try {
+                jsonObject=new JSONObject(jsonStr);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        existingProjects = HandleData.readProjectsNames(getActivity(),file,jsonObject);
         }
-
     }
 
     public void onCreateContextMenu(ContextMenu menu, View v,
@@ -149,6 +132,11 @@ public class CreateProjectFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+        try {
+            new File(getActivity().getFilesDir(), project.getProjectName()).createNewFile();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void handleActions() {
@@ -213,39 +201,6 @@ public class CreateProjectFragment extends Fragment {
         };
     }
 
-    private void saveData() {
-        JSONArray jsonArray;
-        PrintWriter outputStream = null;
-        try {
-            if (!file.exists()) {
-                file.createNewFile();
-                jsonArray = new JSONArray();
-            } else {
-                jsonArray = jsonObject.getJSONArray(JSON_ARRAY_KEY);
-            }
-            if(!saved){
-               jsonArray.put(jsonArray.length(), project.convertToJsonObject());
-            }
-            else{
-                jsonArray.put(jsonArray.length()-1, project.convertToJsonObject());
-            }
-            outputStream = new PrintWriter(new BufferedWriter(new FileWriter(file)));
-            JSONObject newJsonObj = new JSONObject();
-            newJsonObj.put(JSON_ARRAY_KEY, jsonArray);
-            outputStream.write(newJsonObj.toString());
-            System.out.println("Json Saved " + newJsonObj.toString());
-            saved = true;
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        finally {
-            if(outputStream!=null)
-                 outputStream.close();
-        }
-    }
-
     private View.OnClickListener getOnSaveListener() {
         return new View.OnClickListener() {
 
@@ -253,17 +208,19 @@ public class CreateProjectFragment extends Fragment {
             public void onClick(View v) {
                 for (int i = 0; i < existingProjects.size(); i++) {
                     System.out.println(existingProjects.get(i));
-                    if (existingProjects.get(i).equals(titleTxt.getText().toString())) {
-                        showErrorDialog("There exist with the same title ... try another title");
+                    if (existingProjects.get(i).equalsIgnoreCase(titleTxt.getText().toString())) {
+                        showErrorDialog("There exist project with the same title ... try again with another title");
                         return;
                     }
                 }
                 if (listItems.size() == 0)
                     showErrorDialog("Please add at least one subtask to save the project");
                 else {
-                        project = new Project(titleTxt.getText().toString(), listItems, System.currentTimeMillis());
-                        Toast.makeText(getActivity(), "Saved", Toast.LENGTH_SHORT).show();
-                        saveData();
+                    project = new Project(titleTxt.getText().toString(), listItems, System.currentTimeMillis());
+                    saved= HandleData.saveNewProject(getActivity(),project,file,jsonObject,saved);
+                    if(saved)
+                     Toast.makeText(getActivity(), "Saved", Toast.LENGTH_SHORT).show();
+
 
 
                 }

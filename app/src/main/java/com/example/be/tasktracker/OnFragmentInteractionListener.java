@@ -4,8 +4,8 @@ package com.example.be.tasktracker;
  * Created by BE on 6/25/2016.
  */
 public interface OnFragmentInteractionListener {
-    int CREATE_PATTERN=1;
-    int LOAD_PATTERN=2;
-    int STATISICS=3;
+    int CREATE_PROJECT=1;
+    int NEW_TASK=2;
+    int STATISTICS =3;
      void onHomeItemSelected(int itemNum);
 }
