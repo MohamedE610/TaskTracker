@@ -7,9 +7,10 @@
         android:layout_weight="4"
         android:layout_height="50dp"
         android:text="Item"
-        android:textAlignment="center"
+
         android:textSize="20dp"
         android:layout_gravity="center_vertical|center_horizontal"
+        android:textAlignment="center"
         android:id="@+id/project_item"
         />
        <ImageView
@@ -17,7 +18,7 @@
            android:layout_weight="1"
            android:layout_width="0dp"
            android:layout_height="20dp"
-           android:layout_gravity="center_horizontal|center_vertical"
+           android:layout_gravity="center_vertical|center_horizontal"
            android:src="@drawable/arrow"
            />
 </LinearLayout>

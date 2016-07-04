@@ -8,21 +8,24 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 
 import com.example.be.tasktracker.DataModel.HandleData;
 import com.example.be.tasktracker.DataModel.Project;
+import com.example.be.tasktracker.DataModel.Task;
 
 import java.io.File;
 import java.util.ArrayList;
 
 public class ChooseProject extends Fragment {
     OnTaskStartListener mListener;
-    ListView projectslist;
+    ListView projectsListView;
     EditText taskTitleText;
     ProjectsAdapter projectsAdapter;
+    Task mTask;
     ArrayList<Project>projects=new ArrayList<>();
     File file;
     @Override
@@ -35,14 +38,28 @@ public class ChooseProject extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView= inflater.inflate(R.layout.fragment_choose_project, container, false);
-        projectslist= (ListView) rootView.findViewById(R.id.choose_project_listview);
+        projectsListView= (ListView) rootView.findViewById(R.id.choose_project_listview);
         taskTitleText=(EditText)rootView.findViewById(R.id.taskTitle);
         projects= HandleData.readProjects(getActivity(),new File(getActivity().getFilesDir(),getString(R.string.projects_file_name)));
        // stringArrayAdapter=new ArrayAdapter<String>(getActivity(),R.layout.start_list_item,new String[]{"this","that"});
         projectsAdapter=new ProjectsAdapter(getActivity(),projects);
-        projectslist.setAdapter(projectsAdapter);
+        projectsListView.setAdapter(projectsAdapter);
         projectsAdapter.notifyDataSetChanged();
+        onProjectChoosed();
         return rootView;
+    }
+
+    private void onProjectChoosed() {
+      projectsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+          @Override
+          public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                  mTask=new Task(projects.get(position));
+              mTask.setTitle(taskTitleText.getText().toString());
+              mTask.setDateInMs(System.currentTimeMillis());
+              mListener.onTaskStarted(mTask);
+          }
+      });
+
     }
 
 
@@ -64,6 +81,6 @@ public class ChooseProject extends Fragment {
     }
     public interface OnTaskStartListener {
         // TODO: Update argument type and name
-        void onTaskStarted(String projectTitle);
+        void onTaskStarted(Task task);
     }
 }
