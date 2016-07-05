@@ -7,5 +7,5 @@ public interface OnFragmentInteractionListener {
     int CREATE_PROJECT=1;
     int NEW_TASK=2;
     int STATISTICS =3;
-     void onHomeItemSelected(int itemNum);
+    void onHomeItemSelected(int itemNum);
 }

@@ -98,15 +98,8 @@ public class CreateProjectFragment extends Fragment {
         super.onStart();
         file = new File(getActivity().getFilesDir(), getString(R.string.projects_file_name));
         jsonObject=new JSONObject();
-        String jsonStr=HandleData.getProjectsJsonStr(getActivity(),file);
-        if(jsonStr!=null){
-            try {
-                jsonObject=new JSONObject(jsonStr);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        existingProjects = HandleData.readProjectsNames(getActivity(),file,jsonObject);
-        }
+        existingProjects = HandleData.readProjectsNames(file);
+
     }
 
     public void onCreateContextMenu(ContextMenu menu, View v,
@@ -217,7 +210,7 @@ public class CreateProjectFragment extends Fragment {
                     showErrorDialog("Please add at least one subtask to save the project");
                 else {
                     project = new Project(titleTxt.getText().toString(), listItems, System.currentTimeMillis());
-                    saved= HandleData.saveNewProject(getActivity(),project,file,jsonObject,saved);
+                    saved= HandleData.saveNewProject(project,file,saved);
                     if(saved)
                      Toast.makeText(getActivity(), "Saved", Toast.LENGTH_SHORT).show();
 

@@ -1,13 +1,14 @@
 package com.example.be.tasktracker.DataModel;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 /**
  * Created by BE on 7/3/2016.
  */
 public class Task {
-    Project project;
+    transient Project project;
     HashMap<String,Long>subtasks;
     String Title;
 
@@ -25,6 +26,7 @@ public class Task {
         this.project=project;
         int x=project.getSubtasks().size();
         subtasks=new HashMap<String, Long>(x);
+        dateInMs=System.currentTimeMillis();
         for(int i=0;i<x;i++)
             subtasks.put(project.getSubtasks().get(i),new Long(0));
     }

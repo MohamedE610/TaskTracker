@@ -53,10 +53,7 @@ public class ChooseProject extends Fragment {
       projectsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
           @Override
           public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                  mTask=new Task(projects.get(position));
-              mTask.setTitle(taskTitleText.getText().toString());
-              mTask.setDateInMs(System.currentTimeMillis());
-              mListener.onTaskStarted(mTask);
+              mListener.onTaskStarted(projects.get(position),taskTitleText.getText().toString());
           }
       });
 
@@ -81,6 +78,6 @@ public class ChooseProject extends Fragment {
     }
     public interface OnTaskStartListener {
         // TODO: Update argument type and name
-        void onTaskStarted(Task task);
+        void onTaskStarted(Project project, String s);
     }
 }
