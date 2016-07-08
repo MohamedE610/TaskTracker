@@ -1,22 +1,29 @@
 package com.example.be.tasktracker;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.Observable;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.Space;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.be.tasktracker.DataModel.HandleData;
 import com.example.be.tasktracker.DataModel.Project;
@@ -36,16 +43,15 @@ public class StopwatchFragment extends Fragment {
     TextView[] listItems;
     Project project;
     ArrayList<String> subtasks;
-    Button controlBtn;
-    Button saveBtn;
-    private int CLICKED_COLOR = Color.BLUE;
-    private int ORIGINAL_COLOR = Color.CYAN;
+    ImageView controlBtn;
+    ImageView saveBtn;
     boolean working = false;
     private int workingSubtask;
     Task mTask;
     Thread stopwatchThread= new Thread(new RunnableStopWatch());
     private long mSeconds = 0;
     private WorkingBoolean workingBoolean=new WorkingBoolean();
+    private TextView sessionTitle;
     //private OnFragmentInteractionListener mListener;
 
     @Override
@@ -67,15 +73,23 @@ public class StopwatchFragment extends Fragment {
         subtasks=project.getSubtasks();
         listItems = new TextView[subtasks.size()];
         View rootView = inflater.inflate(R.layout.fragment_stopwatch, container, false);
-        saveBtn=(Button)rootView.findViewById(R.id.saveSession);
+        saveBtn=(ImageView) rootView.findViewById(R.id.saveSession);
         runningSubtaskTv = (TextView) rootView.findViewById(R.id.working_subtask);
         timeTv = (TextView) rootView.findViewById(R.id.stopwatch);
-        controlBtn = (Button) rootView.findViewById(R.id.start_done);
+        controlBtn = (ImageView) rootView.findViewById(R.id.start_done);
+        sessionTitle=(TextView)rootView.findViewById(R.id.sessionTitle);
+        if(mTask.getTitle()!=null&&mTask.getTitle().length()>0)
+            sessionTitle.setText(mTask.getTitle());
         initiateLinearList(rootView);
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                HandleData.saveSession(mTask,new File(getActivity().getFilesDir(),project.getProjectName()));
+                if(HandleData.saveSession(mTask,new File(getActivity().getFilesDir(),project.getProjectName()))){
+                    Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Toast.makeText(getActivity().getApplicationContext(), "Error in Saving", Toast.LENGTH_SHORT).show();
+                }
             }
         });
         controlBtn.setOnClickListener(new View.OnClickListener() {
@@ -84,11 +98,14 @@ public class StopwatchFragment extends Fragment {
                 workingBoolean.setValue(!workingBoolean.isValue());
             }
         });
-
+        hideKeyboard(getActivity());
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
         return rootView;
     }
 
     private void initiateLinearList(View rootView) {
+        Space space= (Space) rootView.findViewById(R.id.divider);
+        space.setVisibility(View.INVISIBLE);
         DisplayMetrics displaymetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
         int height = displaymetrics.heightPixels;
@@ -108,17 +125,30 @@ public class StopwatchFragment extends Fragment {
             listItems[i].setGravity(Gravity.CENTER);
             listItems[i].setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
             listItems[i].setMinHeight(dpAsPixelsHeight);
-            //listItems[i].setPadding(0, 0, 20, 0);
             listItems[i].setClickable(true);
+            listItems[i].setBackgroundResource(R.drawable.tvselector);
+
 
             if (i == 0) {
-                listItems[i].setBackgroundColor(CLICKED_COLOR);
+                listItems[i].setBackgroundResource(R.drawable.tvselector);
+                listItems[i].setSelected(true);
                 texViewListener = new TextViewListener();
                 runningSubtaskTv.setText(listItems[i].getText().toString());
-            } else
-                listItems[i].setBackgroundColor(ORIGINAL_COLOR);
+            } else{
+                listItems[i].setSelected(false);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    listItems[i].setTextColor(getResources().getColor(R.color.backgroundColor,null));
+                }
+                else {
+                    listItems[i].setTextColor(getResources().getColor(R.color.backgroundColor));
+                }
+            }
             listItems[i].setOnClickListener(texViewListener);
             linearLayout.addView(listItems[i]);
+            Space space1=new Space(getActivity());
+            space1.setLayoutParams(space.getLayoutParams());
+            space1.setVisibility(View.VISIBLE);
+            linearLayout.addView(space1);
 
         }
     }
@@ -191,13 +221,13 @@ public class StopwatchFragment extends Fragment {
 
             stopwatchThread.interrupt();
             if (value) {
+                controlBtn.setActivated(true);
                 mSeconds = mTask.getSubtasks().get(subtasks.get(workingSubtask));
-                controlBtn.setText("Stop");
                 stopwatchThread=new Thread(new RunnableStopWatch());
                 stopwatchThread.start();
 
             } else {
-                controlBtn.setText("Start");
+                controlBtn.setActivated(false);
                 mTask.getSubtasks().put(subtasks.get(workingSubtask), mSeconds);
                 stopwatchThread.interrupt();
             }
@@ -220,13 +250,32 @@ public class StopwatchFragment extends Fragment {
                 }
             }
 
-            clickedView.setBackgroundColor(ORIGINAL_COLOR);
+            clickedView.setSelected(false);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                clickedView.setTextColor(getResources().getColor(R.color.backgroundColor,null));
+                ((TextView)v).setTextColor(getResources().getColor(R.color.colorWhite,null));
+            }
+            else {
+                clickedView.setTextColor(getResources().getColor(R.color.backgroundColor));
+                ((TextView)v).setTextColor(getResources().getColor(R.color.colorWhite));
+            }
             clickedView = (TextView) v;
-            v.setBackgroundColor(CLICKED_COLOR);
+            clickedView.setSelected(true);
             runningSubtaskTv.setText(clickedView.getText().toString());
             timeTv.setText(convertSecsToText(mTask.getSubtasks().get(subtasks.get(workingSubtask))));
 
         }
+    }
+    public static void hideKeyboard(Context ctx) {
+        InputMethodManager inputManager = (InputMethodManager) ctx
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+
+        // check if no view has focus:
+        View v = ((Activity) ctx).getCurrentFocus();
+        if (v == null)
+            return;
+
+        inputManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
 
 

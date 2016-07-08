@@ -16,6 +16,7 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
 
         setContentView(R.layout.activity_main);
         mcontext = this;
+        //getSupportActionBar().hide();
 
 
 

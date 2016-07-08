@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal|center_vertical"
+    android:background="@drawable/listselector"
+    >
     <TextView
         android:layout_width="0dp"
-        android:layout_weight="4"
-        android:layout_height="50dp"
+        android:layout_weight="10"
+        android:layout_height="40dp"
         android:text="Item"
-
+        android:background="@android:color/transparent"
         android:textSize="20dp"
+        android:gravity="center_vertical|center_horizontal"
         android:layout_gravity="center_vertical|center_horizontal"
         android:textAlignment="center"
         android:id="@+id/project_item"
@@ -17,7 +21,9 @@
            android:id="@+id/go_image"
            android:layout_weight="1"
            android:layout_width="0dp"
-           android:layout_height="20dp"
+           android:layout_height="15dp"
+           android:background="@android:color/transparent"
+           android:gravity="center_vertical|center_horizontal"
            android:layout_gravity="center_vertical|center_horizontal"
            android:src="@drawable/arrow"
            />

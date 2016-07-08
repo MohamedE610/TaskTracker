@@ -22,7 +22,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.be.tasktracker.DataModel.HandleData;
@@ -48,7 +50,8 @@ import java.util.Date;
 public class CreateProjectFragment extends Fragment {
     // TODO: Rename parameter arguments, choose  names that match
 
-    private Button addBtn, saveBtn;
+    private Button  saveBtn;
+    private ImageView addBtn;
     private EditText titleTxt, subtaskTxt;
     private ListView listView;
     private ArrayAdapter<String> arrayAdapter;
@@ -75,7 +78,7 @@ public class CreateProjectFragment extends Fragment {
         // Inflate the layout for this fragment
 
         View rootView = inflater.inflate(R.layout.fragment_create_project, container, false);
-        addBtn = (Button) rootView.findViewById(R.id.Addbtn);
+        addBtn = (ImageView) rootView.findViewById(R.id.Addbtn);
         saveBtn = (Button) rootView.findViewById(R.id.saveBtn);
         titleTxt = (EditText) rootView.findViewById(R.id.projectTitle);
         subtaskTxt = (EditText) rootView.findViewById(R.id.subtaskTitle);
@@ -112,7 +115,6 @@ public class CreateProjectFragment extends Fragment {
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        System.out.println("Fuck method in ");
         if (item.getItemId() == DELETE_ITEM_ID) {
             arrayAdapter.remove(arrayAdapter.getItem(selectedItem));
         } else
@@ -149,7 +151,8 @@ public class CreateProjectFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (subtaskTxt.getText().toString().length() == 0) {
-                    Toast.makeText(getActivity(), "Enter Subtask Title", Toast.LENGTH_SHORT).show();
+                   Toast.makeText(getActivity().getApplicationContext(), "Enter Subtask Title", Toast.LENGTH_SHORT).show();
+
 
                 } else {
                     arrayAdapter.add(subtaskTxt.getText().toString());
@@ -212,7 +215,7 @@ public class CreateProjectFragment extends Fragment {
                     project = new Project(titleTxt.getText().toString(), listItems, System.currentTimeMillis());
                     saved= HandleData.saveNewProject(project,file,saved);
                     if(saved)
-                     Toast.makeText(getActivity(), "Saved", Toast.LENGTH_SHORT).show();
+                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
 
 
 

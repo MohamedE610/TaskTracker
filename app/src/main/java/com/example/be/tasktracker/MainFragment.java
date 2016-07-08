@@ -3,6 +3,7 @@ package com.example.be.tasktracker;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +34,7 @@ public class MainFragment extends Fragment {
         loadPatternBtn=(Button)rootView.findViewById(R.id.load);
         statisticsBtn=(Button)rootView.findViewById(R.id.statistics);
         onButtonClicked();
+        ((AppCompatActivity)getActivity()).getSupportActionBar().hide();
      return rootView;
     }
 
