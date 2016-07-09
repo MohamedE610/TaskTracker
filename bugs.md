@@ -1,0 +1,1 @@
+1- timer pauses when the screen is off
