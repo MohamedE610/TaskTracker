@@ -2,11 +2,11 @@ package com.example.be.tasktracker;
 
 import android.app.Activity;
 import android.content.Context;
-import android.database.Observable;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.Space;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -16,12 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,62 +28,93 @@ import com.example.be.tasktracker.DataModel.Task;
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Set;
 
-public class StopwatchFragment extends Fragment {
+public class StopwatchFragment extends Fragment implements OnBackStackPressedListener{
+    private static final String TASK_KEY = "TASK";
+    private static final String WORKING_KEY = "WORKING";
+    private static final String ELAPSED_SECONDS = "ELAPSED";
+    private static final String OFFTIME_MS = "OFFTIME";
+    private static final String WORKING_SUBTASK = "WORKING_SUBTASK";
     TextView runningSubtaskTv;
     TextView timeTv;
     TextView[] listItems;
     Project project;
     ArrayList<String> subtasks;
     ImageView controlBtn;
+    Bundle savedBundle;
     ImageView saveBtn;
-    boolean working = false;
     private int workingSubtask;
     Task mTask;
-    Thread stopwatchThread= new Thread(new RunnableStopWatch());
+    Gson gson = new Gson();
+    long sleeping = 0;
+    Thread stopwatchThread = new Thread(new RunnableStopWatch());
     private long mSeconds = 0;
-    private WorkingBoolean workingBoolean=new WorkingBoolean();
+    private WorkingBoolean workingBoolean = new WorkingBoolean();
     private TextView sessionTitle;
     //private OnFragmentInteractionListener mListener;
 
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onStart() {
+        super.onStart();
+        if (workingBoolean.isValue()||(savedBundle!=null&&savedBundle.getBoolean(WORKING_KEY))) {
+            workingBoolean.setValue(true,true);
+        }
     }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        if (workingBoolean.isValue()) {
+            stopwatchThread.interrupt();
+            mTask.getSubtasks().put(subtasks.get(workingSubtask), mSeconds);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        System.out.println("Called onSaveInstanceState");
+
+        super.onSaveInstanceState(outState);
+        sleeping = System.nanoTime();
+        outState.putString(TASK_KEY, gson.toJson(mTask));
+        outState.putBoolean(WORKING_KEY, workingBoolean.isValue());
+        outState.putLong(ELAPSED_SECONDS, mSeconds);
+        outState.putLong(OFFTIME_MS, sleeping);
+        outState.putInt(WORKING_SUBTASK, workingSubtask);
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        project=new Gson().fromJson(getArguments().getString("KEY"),Project.class);
+        setRetainInstance(true);
+        project = gson.fromJson(getArguments().getString("KEY"), Project.class);
+        if (mTask == null)
+            mTask = new Task(project);
 
-        mTask = new Task(project);
-        if(getArguments().get("TITLE")!=null){
+        if (getArguments().get("TITLE") != null) {
             mTask.setTitle(getArguments().get("TITLE").toString());
         }
-       // project = mTask.getProject();
-        subtasks=project.getSubtasks();
+        subtasks = project.getSubtasks();
         listItems = new TextView[subtasks.size()];
         View rootView = inflater.inflate(R.layout.fragment_stopwatch, container, false);
-        saveBtn=(ImageView) rootView.findViewById(R.id.saveSession);
+        saveBtn = (ImageView) rootView.findViewById(R.id.saveSession);
         runningSubtaskTv = (TextView) rootView.findViewById(R.id.working_subtask);
         timeTv = (TextView) rootView.findViewById(R.id.stopwatch);
         controlBtn = (ImageView) rootView.findViewById(R.id.start_done);
-        sessionTitle=(TextView)rootView.findViewById(R.id.sessionTitle);
-        if(mTask.getTitle()!=null&&mTask.getTitle().length()>0)
+        sessionTitle = (TextView) rootView.findViewById(R.id.sessionTitle);
+        if (mTask.getTitle() != null && mTask.getTitle().length() > 0)
             sessionTitle.setText(mTask.getTitle());
         initiateLinearList(rootView);
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(HandleData.saveSession(mTask,new File(getActivity().getFilesDir(),project.getProjectName()))){
+                if (HandleData.saveSession(mTask, new File(getActivity().getFilesDir(), project.getProjectName()))) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
-                }
-                else{
+                } else {
                     Toast.makeText(getActivity().getApplicationContext(), "Error in Saving", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -95,16 +122,17 @@ public class StopwatchFragment extends Fragment {
         controlBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                workingBoolean.setValue(!workingBoolean.isValue());
+                workingBoolean.setValue(!workingBoolean.isValue(), false);
             }
         });
         hideKeyboard(getActivity());
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
         return rootView;
     }
 
     private void initiateLinearList(View rootView) {
-        Space space= (Space) rootView.findViewById(R.id.divider);
+        Space space = (Space) rootView.findViewById(R.id.divider);
         space.setVisibility(View.INVISIBLE);
         DisplayMetrics displaymetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
@@ -134,18 +162,17 @@ public class StopwatchFragment extends Fragment {
                 listItems[i].setSelected(true);
                 texViewListener = new TextViewListener();
                 runningSubtaskTv.setText(listItems[i].getText().toString());
-            } else{
+            } else {
                 listItems[i].setSelected(false);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    listItems[i].setTextColor(getResources().getColor(R.color.backgroundColor,null));
-                }
-                else {
+                    listItems[i].setTextColor(getResources().getColor(R.color.backgroundColor, null));
+                } else {
                     listItems[i].setTextColor(getResources().getColor(R.color.backgroundColor));
                 }
             }
             listItems[i].setOnClickListener(texViewListener);
             linearLayout.addView(listItems[i]);
-            Space space1=new Space(getActivity());
+            Space space1 = new Space(getActivity());
             space1.setLayoutParams(space.getLayoutParams());
             space1.setVisibility(View.VISIBLE);
             linearLayout.addView(space1);
@@ -153,24 +180,47 @@ public class StopwatchFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        System.out.println("OnActivityCreated");
+        savedBundle=savedInstanceState;
+        if (savedInstanceState != null && (savedInstanceState.getString(TASK_KEY) != null)) {
+
+            mTask = gson.fromJson(savedInstanceState.getString(TASK_KEY), Task.class);
+            mSeconds = savedInstanceState.getLong(ELAPSED_SECONDS);
+            if (savedInstanceState.getBoolean(WORKING_KEY)) {
+                sleeping = savedInstanceState.getLong(OFFTIME_MS);
+                long secs = (System.nanoTime() - sleeping) / 1000000000;
+                mSeconds += secs;
+            }
+            timeTv.setText(convertSecsToText(mSeconds));
+            workingSubtask = savedInstanceState.getInt(WORKING_SUBTASK);
+
+
+        }
+    }
+
+
     /* @Override
-       public void onAttach(Context context) {
-           super.onAttach(context);
-           if (context instanceof OnFragmentInteractionListener) {
-               mListener = (OnFragmentInteractionListener) context;
-           } else {
-               throw new RuntimeException(context.toString()
-                       + " must implement OnFragmentInteractionListener");
+           public void onAttach(Context context) {
+               super.onAttach(context);
+               if (context instanceof OnFragmentInteractionListener) {
+                   mListener = (OnFragmentInteractionListener) context;
+               } else {
+                   throw new RuntimeException(context.toString()
+                           + " must implement OnFragmentInteractionListener");
+               }
            }
-       }
 
-       @Override
-       public void onDetach() {
-           super.onDetach();
-           mListener = null;
-       }
+           @Override
+           public void onDetach() {
+               super.onDetach();
+               mListener = null;
+           }
 
-   */
+       */
+
     public static String convertSecsToText(long seconds) {
         StringBuilder sb = new StringBuilder();
         int min = (int) (seconds / 60);
@@ -187,21 +237,36 @@ public class StopwatchFragment extends Fragment {
         String newText = sb.toString();
         return newText;
     }
+
+
+    @Override
+    public void onBackPressed() {
+        if(mTask!=null)
+       Toast.makeText(getActivity(),mTask.getTitle(),Toast.LENGTH_SHORT).show();
+
+    }
+
     class RunnableStopWatch implements Runnable {
         @Override
         public void run() {
             try {
                 while (workingBoolean.isValue()) {
                     Thread.sleep(1000);
+
                     if (workingBoolean.isValue())
                         mSeconds++;
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (workingBoolean.isValue())
-                                timeTv.setText(convertSecsToText(mSeconds));
-                        }
-                    });
+                    System.out.println("time elapse:: " + mSeconds);
+                    try {
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (workingBoolean.isValue())
+                                    timeTv.setText(convertSecsToText(mSeconds));
+                            }
+                        });
+                    } catch (NullPointerException ex) {
+                        ex.printStackTrace();
+                    }
 
                 }
             } catch (InterruptedException e) {
@@ -209,6 +274,7 @@ public class StopwatchFragment extends Fragment {
             }
         }
     }
+
     class WorkingBoolean {
         boolean value = false;
 
@@ -216,14 +282,17 @@ public class StopwatchFragment extends Fragment {
             return value;
         }
 
-        public void setValue(boolean value) {
+        public void setValue(boolean value, boolean override) {
+            //    if (this.value == value)
+            //      return;
             this.value = value;
 
             stopwatchThread.interrupt();
             if (value) {
                 controlBtn.setActivated(true);
-                mSeconds = mTask.getSubtasks().get(subtasks.get(workingSubtask));
-                stopwatchThread=new Thread(new RunnableStopWatch());
+                if (!override)
+                    mSeconds = mTask.getSubtasks().get(subtasks.get(workingSubtask));
+                stopwatchThread = new Thread(new RunnableStopWatch());
                 stopwatchThread.start();
 
             } else {
@@ -234,6 +303,7 @@ public class StopwatchFragment extends Fragment {
 
         }
     }
+
     class TextViewListener implements View.OnClickListener {
         public TextView clickedView = listItems[0];
 
@@ -242,7 +312,7 @@ public class StopwatchFragment extends Fragment {
             if (clickedView == v)
                 return;
             if (workingBoolean.isValue())
-                workingBoolean.setValue(false);
+                workingBoolean.setValue(false, false);
             for (int i = 0; i < listItems.length; i++) {
                 if (listItems[i] == v) {
                     workingSubtask = i;
@@ -252,12 +322,11 @@ public class StopwatchFragment extends Fragment {
 
             clickedView.setSelected(false);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                clickedView.setTextColor(getResources().getColor(R.color.backgroundColor,null));
-                ((TextView)v).setTextColor(getResources().getColor(R.color.colorWhite,null));
-            }
-            else {
+                clickedView.setTextColor(getResources().getColor(R.color.backgroundColor, null));
+                ((TextView) v).setTextColor(getResources().getColor(R.color.colorWhite, null));
+            } else {
                 clickedView.setTextColor(getResources().getColor(R.color.backgroundColor));
-                ((TextView)v).setTextColor(getResources().getColor(R.color.colorWhite));
+                ((TextView) v).setTextColor(getResources().getColor(R.color.colorWhite));
             }
             clickedView = (TextView) v;
             clickedView.setSelected(true);
@@ -266,6 +335,7 @@ public class StopwatchFragment extends Fragment {
 
         }
     }
+
     public static void hideKeyboard(Context ctx) {
         InputMethodManager inputManager = (InputMethodManager) ctx
                 .getSystemService(Context.INPUT_METHOD_SERVICE);

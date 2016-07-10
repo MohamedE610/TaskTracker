@@ -4,3 +4,5 @@
 4- add date section in the session header
 5- confirm saving on back button saved
 6- go to statistics after saving
+7- resume last task
+8- add to notification bar
