@@ -10,7 +10,7 @@ import com.google.gson.Gson;
 
 public class NewTaskActivity extends AppCompatActivity implements ChooseProject.OnTaskStartListener {
     final static String TASK_KEY = "KEY";
-    private static final String STOPWATCH_TAG ="STOPWATCH_TAG";
+    private static final String STOPWATCH_TAG = "STOPWATCH_TAG";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,18 +20,21 @@ public class NewTaskActivity extends AppCompatActivity implements ChooseProject.
             if (savedInstanceState != null) {
                 return;
             }
-            getSupportFragmentManager().beginTransaction().add(R.id.activity_new_task, new ChooseProject()).addToBackStack(null).commit();
+            getSupportFragmentManager().beginTransaction().add(R.id.activity_new_task, new ChooseProject()).commit();
 
         }
     }
 
     @Override
     public void onBackPressed() {
-        if(getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG)!=null){
-            ((OnBackStackPressedListener)getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG)).onBackPressed();
-        }
-        super.onBackPressed();
 
+        if (getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG) != null) {
+            if (((OnBackStackPressedListener) getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG)).onBackPressed())
+                super.onBackPressed();
+
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -43,7 +46,7 @@ public class NewTaskActivity extends AppCompatActivity implements ChooseProject.
         bundle.putString(TASK_KEY, new Gson().toJson(project));
         bundle.putString("TITLE", s);
         stopwatch.setArguments(bundle);
-        fragmentTransaction.replace(R.id.activity_new_task, stopwatch,STOPWATCH_TAG).addToBackStack(null).commit();
+        fragmentTransaction.replace(R.id.activity_new_task, stopwatch, STOPWATCH_TAG).addToBackStack(null).commit();
     }
 }
 
