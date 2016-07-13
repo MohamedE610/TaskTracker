@@ -2,12 +2,14 @@ package com.example.be.tasktracker;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.Space;
+import android.support.v7.app.AlertDialog;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -16,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -27,15 +30,21 @@ import com.example.be.tasktracker.DataModel.Project;
 import com.example.be.tasktracker.DataModel.Task;
 import com.google.gson.Gson;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 import java.io.File;
 import java.util.ArrayList;
+import java.util.TimeZone;
 
-public class StopwatchFragment extends Fragment implements OnBackStackPressedListener{
+public class StopwatchFragment extends Fragment implements OnBackStackPressedListener {
     private static final String TASK_KEY = "TASK";
     private static final String WORKING_KEY = "WORKING";
     private static final String ELAPSED_SECONDS = "ELAPSED";
     private static final String OFFTIME_MS = "OFFTIME";
     private static final String WORKING_SUBTASK = "WORKING_SUBTASK";
+    enum SaveState{SAVED,UPDATES_NOT_SAVED,NOT_SAVED,ABORT_SAVING}
+    SaveState saveState=SaveState.NOT_SAVED;
     TextView runningSubtaskTv;
     TextView timeTv;
     TextView[] listItems;
@@ -52,19 +61,37 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
     private long mSeconds = 0;
     private WorkingBoolean workingBoolean = new WorkingBoolean();
     private TextView sessionTitle;
+    private boolean activityDestroyed;
+    TextView dateTV;
     //private OnFragmentInteractionListener mListener;
 
 
     @Override
     public void onStart() {
         super.onStart();
-        if (workingBoolean.isValue()||(savedBundle!=null&&savedBundle.getBoolean(WORKING_KEY))) {
-            workingBoolean.setValue(true,true);
+        if (workingBoolean.isValue()) {
+            mSeconds += ((System.nanoTime() - sleeping) / 1000000000.0)+1;
+            timeTv.setText(convertSecsToText(mSeconds));
+            workingBoolean.setValue(true, true);
+        } else if (activityDestroyed && savedBundle != null && (savedBundle.getString(TASK_KEY) != null)) {
+            mTask = gson.fromJson(savedBundle.getString(TASK_KEY), Task.class);
+            mSeconds = savedBundle.getLong(ELAPSED_SECONDS);
+            if (savedBundle.getBoolean(WORKING_KEY)) {
+                sleeping = savedBundle.getLong(OFFTIME_MS);
+                mSeconds += ((System.nanoTime() - sleeping) / 1000000000.0)+1;
+                timeTv.setText(convertSecsToText(mSeconds));
+                workingSubtask = savedBundle.getInt(WORKING_SUBTASK);
+                workingBoolean.setValue(true, true);
+
+            }
+
         }
+        activityDestroyed = false;
     }
 
+
     @Override
-    public void onStop(){
+    public void onStop() {
         super.onStop();
         if (workingBoolean.isValue()) {
             stopwatchThread.interrupt();
@@ -106,6 +133,9 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         timeTv = (TextView) rootView.findViewById(R.id.stopwatch);
         controlBtn = (ImageView) rootView.findViewById(R.id.start_done);
         sessionTitle = (TextView) rootView.findViewById(R.id.sessionTitle);
+        dateTV=(TextView)rootView.findViewById(R.id.sessionDate);
+        DateTime dateTime=new DateTime((long)mTask.getDateInMs(),DateTimeZone.forTimeZone(TimeZone.getDefault()));
+        dateTV.setText(dateTime.toString("d/M/Y  H:m:s"));
         if (mTask.getTitle() != null && mTask.getTitle().length() > 0)
             sessionTitle.setText(mTask.getTitle());
         initiateLinearList(rootView);
@@ -116,6 +146,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
                     workingBoolean.setValue(false,false);
                 if (HandleData.saveSession(mTask, new File(getActivity().getFilesDir(), project.getProjectName()))) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
+                    saveState=SaveState.SAVED;
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), "Error in Saving", Toast.LENGTH_SHORT).show();
                 }
@@ -186,42 +217,10 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         System.out.println("OnActivityCreated");
-        savedBundle=savedInstanceState;
-        if (savedInstanceState != null && (savedInstanceState.getString(TASK_KEY) != null)) {
-
-            mTask = gson.fromJson(savedInstanceState.getString(TASK_KEY), Task.class);
-            mSeconds = savedInstanceState.getLong(ELAPSED_SECONDS);
-            if (savedInstanceState.getBoolean(WORKING_KEY)) {
-                sleeping = savedInstanceState.getLong(OFFTIME_MS);
-                long secs = (System.nanoTime() - sleeping) / 1000000000;
-                mSeconds += secs;
-            }
-            timeTv.setText(convertSecsToText(mSeconds));
-            workingSubtask = savedInstanceState.getInt(WORKING_SUBTASK);
-
-
-        }
+        savedBundle = savedInstanceState;
+        activityDestroyed = true;
     }
 
-
-    /* @Override
-           public void onAttach(Context context) {
-               super.onAttach(context);
-               if (context instanceof OnFragmentInteractionListener) {
-                   mListener = (OnFragmentInteractionListener) context;
-               } else {
-                   throw new RuntimeException(context.toString()
-                           + " must implement OnFragmentInteractionListener");
-               }
-           }
-
-           @Override
-           public void onDetach() {
-               super.onDetach();
-               mListener = null;
-           }
-
-       */
 
     public static String convertSecsToText(long seconds) {
         StringBuilder sb = new StringBuilder();
@@ -242,10 +241,55 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
 
 
     @Override
-    public void onBackPressed() {
-        if(mTask!=null)
-       Toast.makeText(getActivity(),mTask.getTitle(),Toast.LENGTH_SHORT).show();
+    public boolean onBackPressed() {
+        switch (saveState){
+            case NOT_SAVED:
+                 showDialog("Do you want to save this session ? ");
+                break;
+            case UPDATES_NOT_SAVED:
+                 showDialog("Changes has been made to this session .. Do you want to save the changes ? ");
+                break;
 
+        }
+        return saveState==SaveState.SAVED||saveState==SaveState.ABORT_SAVING;
+
+    }
+
+
+    private void showDialog(String s) {
+        if(workingBoolean.isValue())
+            workingBoolean.setValue(false,false);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Save Changes");
+        builder.setMessage(s);
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (HandleData.saveSession(mTask, new File(getActivity().getFilesDir(), project.getProjectName()))) {
+                    Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
+                    saveState=SaveState.SAVED;
+                } else {
+                    Toast.makeText(getActivity().getApplicationContext(), "Error in Saving", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                 saveState=SaveState.ABORT_SAVING;
+            }
+        });
+
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener(){
+
+
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                //so that we can keep dialog msg before fragment destroyed
+                  getActivity().onBackPressed();
+            }
+        });
+        builder.show();
     }
 
     class RunnableStopWatch implements Runnable {
@@ -285,12 +329,11 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         }
 
         public void setValue(boolean value, boolean override) {
-            //    if (this.value == value)
-            //      return;
             this.value = value;
 
             stopwatchThread.interrupt();
             if (value) {
+               saveState= (saveState == SaveState.SAVED ? SaveState.UPDATES_NOT_SAVED:SaveState.SAVED.NOT_SAVED);
                 controlBtn.setActivated(true);
                 if (!override)
                     mSeconds = mTask.getSubtasks().get(subtasks.get(workingSubtask));
@@ -336,6 +379,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
             timeTv.setText(convertSecsToText(mTask.getSubtasks().get(subtasks.get(workingSubtask))));
 
         }
+
     }
 
     public static void hideKeyboard(Context ctx) {
