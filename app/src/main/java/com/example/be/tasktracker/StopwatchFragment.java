@@ -112,6 +112,8 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(workingBoolean.isValue()) //if counter is working stop it on saving
+                    workingBoolean.setValue(false,false);
                 if (HandleData.saveSession(mTask, new File(getActivity().getFilesDir(), project.getProjectName()))) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
                 } else {

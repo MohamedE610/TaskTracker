@@ -9,6 +9,7 @@
         <item name="android:background">@color/backgroundColor</item>
         <item name="android:textColor">@color/colorText</item>
     </style>
+
     <style name="ButtonStyle">
         <!-- <item name="android:background">@color/backgroundColor</item> -->
         <item name="android:background">@drawable/buttongbg</item>
@@ -26,5 +27,14 @@
         <item name="android:background">@color/colorWhite</item>
         <item name="android:textColor">@color/backgroundColor</item>
     </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
 </resources>

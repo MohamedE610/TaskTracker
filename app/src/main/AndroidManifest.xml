@@ -9,7 +9,6 @@
         android:supportsRtl="false"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -17,7 +16,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".CreateProjectActivity" />
-        <activity android:name=".NewTaskActivity"></activity>
+        <activity android:name=".NewTaskActivity" />
     </application>
 
 </manifest>
