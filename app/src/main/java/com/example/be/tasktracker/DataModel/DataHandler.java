@@ -21,7 +21,7 @@ import java.util.ArrayList;
 /**
  * Created by BE on 7/1/2016.
  */
-public class HandleData {
+public class DataHandler {
     public final static String JSONARRAYKEY = "values";
 
     public static boolean saveNewProject(Project project, File file, boolean saved) {
@@ -89,7 +89,7 @@ public class HandleData {
 
     public static ArrayList<String> readProjectsNames(File file) {
 
-        String jsonStr = HandleData.getJsonStr(file);
+        String jsonStr = DataHandler.getJsonStr(file);
         ArrayList<String> projectsNames = new ArrayList<>();
         if (jsonStr != null) {
             JSONObject jsonObject = new JSONObject();
@@ -135,17 +135,17 @@ public class HandleData {
         return projects;
     }
 
-    public static boolean saveSession(Task task, File file) {
+    public static boolean saveSession(Session task, File file) {
         JSONArray jsonArray = null;
         Gson gson = new Gson();
         try {
-            if (!file.exists()||getJsonStr(file)==null) {
+            if (!file.exists() || getJsonStr(file) == null) {
                 file.createNewFile();
                 jsonArray = new JSONArray();
 
             } else
                 jsonArray = (new JSONObject(getJsonStr(file))).getJSONArray("values");
-            jsonArray.put(jsonArray.length(), gson.toJson(task, Task.class));
+            jsonArray.put(jsonArray.length(), gson.toJson(task, Session.class));
             System.out.println(gson.toJson(jsonArray, JSONArray.class));
             writeJsonToFile(gson.toJson(jsonArray, JSONArray.class), file);
 
@@ -156,5 +156,29 @@ public class HandleData {
         }
 
         return true;
+    }
+
+    public static ArrayList<Session> readSessions(Context context, Project project) {
+        File file = new File(context.getFilesDir(), project.getProjectName());
+        ArrayList<Session> sessions = new ArrayList<>();
+        if (!file.exists())
+            return sessions;
+        String jsonStr = getJsonStr(file);
+        if (jsonStr == null || jsonStr.length() == 0)
+            return sessions;
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject = new JSONObject(jsonStr);
+            JSONArray tempJsArray = jsonObject.getJSONArray("values");
+            Gson gson = new Gson();
+            for (int i = 0; i < tempJsArray.length(); i++) {
+                System.out.println(tempJsArray.getString(i));
+                Session session=gson.fromJson(tempJsArray.getString(i),Session.class);
+                sessions.add(session);
+            }
+        } catch (JSONException e1) {
+            e1.printStackTrace();
+        }
+        return sessions;
     }
 }

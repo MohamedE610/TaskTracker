@@ -1,15 +1,16 @@
 package com.example.be.tasktracker.DataModel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 
 /**
  * Created by BE on 7/3/2016.
  */
-public class Task {
+public class Session {
     transient Project project;
-    HashMap<String,Long>subtasks;
+    HashMap<String,Long>tasks;
     String Title;
 
     public Long getDateInMs() {
@@ -22,13 +23,13 @@ public class Task {
 
     Long dateInMs;
 
-    public Task(Project project){
+    public Session(Project project){
         this.project=project;
-        int x=project.getSubtasks().size();
-        subtasks=new HashMap<String, Long>(x);
+        int x=project.getTasks().size();
+        tasks=new HashMap<String, Long>(x);
         dateInMs=System.currentTimeMillis();
         for(int i=0;i<x;i++)
-            subtasks.put(project.getSubtasks().get(i),new Long(0));
+            tasks.put(project.getTasks().get(i),new Long(0));
     }
     public Project getProject() {
         return project;
@@ -37,22 +38,28 @@ public class Task {
     public void setProject(Project project) {
         this.project = project;
     }
-    public Long getSubtask(String str) {
-        return subtasks.get(str);
+    public Long getTaskTime(String str) {
+        return tasks.get(str);
     }
     public String getTitle() {
         return Title;
     }
+   public String[] getTasksNames(){
+       String[]names=new String[tasks.size()];
+      // tasks.values();
+         tasks.keySet().toArray(names);
+       return names;
 
+   }
     public void setTitle(String title) {
         Title = title;
     }
 
-    public HashMap<String, Long> getSubtasks() {
-        return subtasks;
+    public HashMap<String, Long> getTasks() {
+        return tasks;
     }
 
     public void setSubtasks(HashMap<String, Long> subtasks) {
-        this.subtasks = subtasks;
+        this.tasks = subtasks;
     }
 }

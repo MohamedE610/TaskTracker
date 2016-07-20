@@ -9,7 +9,6 @@
         android:supportsRtl="false"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -17,7 +16,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".CreateProjectActivity" />
-        <activity android:name=".NewTaskActivity"></activity>
+        <activity android:name=".NewTaskActivity" />
+        <activity android:name=".StatisticsActivity" android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"></activity>
     </application>
 
 </manifest>

@@ -1,4 +1,4 @@
-package com.example.be.tasktracker;
+package com.example.be.tasktracker.Adapters;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.be.tasktracker.DataModel.Project;
+import com.example.be.tasktracker.R;
 
 import java.util.ArrayList;
 import java.util.zip.Inflater;
@@ -22,14 +23,14 @@ import java.util.zip.Inflater;
  */
 public class ProjectsAdapter extends BaseAdapter{
     private final LayoutInflater inflater;
-    Context mcontext;
+    Context mContext;
     static ImageView imageView;
     TextView holderTextView;
     ArrayList<Project>list;
 
     public ProjectsAdapter(Context context, ArrayList<Project>list) {
         super();
-        mcontext=context;
+        mContext=context;
         this.list=list;
         inflater = (LayoutInflater)context.
                 getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -66,10 +67,10 @@ public class ProjectsAdapter extends BaseAdapter{
         if(imageView==null){
             imageView= (ImageView) convertView.findViewById(R.id.go_image);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                imageView.setImageDrawable(mcontext.getDrawable(R.drawable.arrow));
+                imageView.setImageDrawable(mContext.getDrawable(R.drawable.arrow));
             }
             else{
-                imageView.setImageDrawable(mcontext.getResources().getDrawable(R.drawable.arrow));
+                imageView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.arrow));
             }
         }
         return convertView;

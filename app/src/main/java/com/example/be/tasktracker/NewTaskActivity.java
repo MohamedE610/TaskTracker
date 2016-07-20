@@ -9,7 +9,7 @@ import com.example.be.tasktracker.DataModel.Project;
 import com.google.gson.Gson;
 
 public class NewTaskActivity extends AppCompatActivity implements ChooseProject.OnTaskStartListener {
-    final static String TASK_KEY = "KEY";
+    final static String Session_KEY = "KEY";
     private static final String STOPWATCH_TAG = "STOPWATCH_TAG";
 
     @Override
@@ -43,7 +43,7 @@ public class NewTaskActivity extends AppCompatActivity implements ChooseProject.
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         StopwatchFragment stopwatch = new StopwatchFragment();
         Bundle bundle = new Bundle();
-        bundle.putString(TASK_KEY, new Gson().toJson(project));
+        bundle.putString(Session_KEY, new Gson().toJson(project));
         bundle.putString("TITLE", s);
         stopwatch.setArguments(bundle);
         fragmentTransaction.replace(R.id.activity_new_task, stopwatch, STOPWATCH_TAG).addToBackStack(null).commit();

@@ -9,6 +9,10 @@
         <item name="android:background">@color/backgroundColor</item>
         <item name="android:textColor">@color/colorText</item>
     </style>
+    <style name="ToolbarStyle" parent="Theme.AppCompat.Light.NoActionBar" >
+        <item name="android:background">@color/backgroundColor</item>
+        <item name="android:textColor">@color/colorText</item>
+    </style>
     <style name="ButtonStyle">
         <!-- <item name="android:background">@color/backgroundColor</item> -->
         <item name="android:background">@drawable/buttongbg</item>
@@ -20,7 +24,12 @@
         <item name="android:layout_centerHorizontal">true</item>
         <item name="android:clickable">true</item>
     </style>
+<style name="NavBtnStyle" parent="ButtonStyle">
+    <item name="android:layout_marginTop">0dp</item>
+    <item name="android:layout_height">20dp</item>
+   <!-- <item name="android:background">@color/differentBtnBG</item> -->
 
+</style>
     <style name="textstyle">
         <item name="android:background">@color/colorWhite</item>
         <item name="android:textColor">@color/backgroundColor</item>

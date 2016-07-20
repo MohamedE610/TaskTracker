@@ -5,7 +5,7 @@ package com.example.be.tasktracker;
  */
 public interface OnFragmentInteractionListener {
     int CREATE_PROJECT=1;
-    int NEW_TASK=2;
+    int NEW_SESSION=2;
     int STATISTICS =3;
     void onHomeItemSelected(int itemNum);
 }

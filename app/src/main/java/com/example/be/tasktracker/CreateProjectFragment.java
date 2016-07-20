@@ -27,7 +27,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.be.tasktracker.DataModel.HandleData;
+import com.example.be.tasktracker.DataModel.DataHandler;
 import com.example.be.tasktracker.DataModel.Project;
 
 import org.json.JSONArray;
@@ -101,7 +101,7 @@ public class CreateProjectFragment extends Fragment {
         super.onStart();
         file = new File(getActivity().getFilesDir(), getString(R.string.projects_file_name));
         jsonObject=new JSONObject();
-        existingProjects = HandleData.readProjectsNames(file);
+        existingProjects = DataHandler.readProjectsNames(file);
 
     }
 
@@ -213,7 +213,7 @@ public class CreateProjectFragment extends Fragment {
                     showErrorDialog("Please add at least one subtask to save the project");
                 else {
                     project = new Project(titleTxt.getText().toString(), listItems, System.currentTimeMillis());
-                    saved= HandleData.saveNewProject(project,file,saved);
+                    saved= DataHandler.saveNewProject(project,file,saved);
                     if(saved)
                      Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
 

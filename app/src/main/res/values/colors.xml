@@ -11,4 +11,5 @@
     <color name="colorGreen">#00fe06</color>
     <color name="colorButtonText">#04b9d4</color>
     <color name="colorPressed">#02252a</color>
+    <color name="differentBtnBG">#03c6e3</color>
 </resources>

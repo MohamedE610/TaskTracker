@@ -7,4 +7,6 @@
     <string name="JSON_ARRAY_KEY">values</string>
     <string name="action_edit">Edit</string>
     <string name="projects_file_name">com.example.tasktracker.projectsfile</string>
+    <string name="open">Open</string>
+    <string name="close">Close</string>
 </resources>

@@ -48,7 +48,7 @@ public class MainFragment extends Fragment {
         loadPatternBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onHomeItemSelected(OnFragmentInteractionListener.NEW_TASK);
+                mListener.onHomeItemSelected(OnFragmentInteractionListener.NEW_SESSION);
             }
         });
         statisticsBtn.setOnClickListener(new View.OnClickListener() {

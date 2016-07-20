@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.Space;
 import android.support.v7.app.AlertDialog;
 import android.util.DisplayMetrics;
@@ -18,16 +17,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.be.tasktracker.DataModel.HandleData;
+import com.example.be.tasktracker.DataModel.DataHandler;
 import com.example.be.tasktracker.DataModel.Project;
 
-import com.example.be.tasktracker.DataModel.Task;
+import com.example.be.tasktracker.DataModel.Session;
 import com.google.gson.Gson;
 
 import org.joda.time.DateTime;
@@ -38,23 +36,23 @@ import java.util.ArrayList;
 import java.util.TimeZone;
 
 public class StopwatchFragment extends Fragment implements OnBackStackPressedListener {
-    private static final String TASK_KEY = "TASK";
+    private static final String SESSION_KEY = "SESSION";
     private static final String WORKING_KEY = "WORKING";
     private static final String ELAPSED_SECONDS = "ELAPSED";
     private static final String OFFTIME_MS = "OFFTIME";
-    private static final String WORKING_SUBTASK = "WORKING_SUBTASK";
+    private static final String WORKING_TASK = "WORKING_TASK";
     enum SaveState{SAVED,UPDATES_NOT_SAVED,NOT_SAVED,ABORT_SAVING}
     SaveState saveState=SaveState.NOT_SAVED;
-    TextView runningSubtaskTv;
+    TextView runningTaskTv;
     TextView timeTv;
     TextView[] listItems;
     Project project;
-    ArrayList<String> subtasks;
+    ArrayList<String> tasks;
     ImageView controlBtn;
     Bundle savedBundle;
     ImageView saveBtn;
-    private int workingSubtask;
-    Task mTask;
+    private int workingTask;
+    Session mSession;
     Gson gson = new Gson();
     long sleeping = 0;
     Thread stopwatchThread = new Thread(new RunnableStopWatch());
@@ -73,14 +71,14 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
             mSeconds += ((System.nanoTime() - sleeping) / 1000000000.0)+1;
             timeTv.setText(convertSecsToText(mSeconds));
             workingBoolean.setValue(true, true);
-        } else if (activityDestroyed && savedBundle != null && (savedBundle.getString(TASK_KEY) != null)) {
-            mTask = gson.fromJson(savedBundle.getString(TASK_KEY), Task.class);
+        } else if (activityDestroyed && savedBundle != null && (savedBundle.getString(SESSION_KEY) != null)) {
+            mSession = gson.fromJson(savedBundle.getString(SESSION_KEY), Session.class);
             mSeconds = savedBundle.getLong(ELAPSED_SECONDS);
             if (savedBundle.getBoolean(WORKING_KEY)) {
                 sleeping = savedBundle.getLong(OFFTIME_MS);
                 mSeconds += ((System.nanoTime() - sleeping) / 1000000000.0)+1;
                 timeTv.setText(convertSecsToText(mSeconds));
-                workingSubtask = savedBundle.getInt(WORKING_SUBTASK);
+                workingTask = savedBundle.getInt(WORKING_TASK);
                 workingBoolean.setValue(true, true);
 
             }
@@ -95,7 +93,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         super.onStop();
         if (workingBoolean.isValue()) {
             stopwatchThread.interrupt();
-            mTask.getSubtasks().put(subtasks.get(workingSubtask), mSeconds);
+            mSession.getTasks().put(tasks.get(workingTask), mSeconds);
         }
     }
 
@@ -105,11 +103,11 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
 
         super.onSaveInstanceState(outState);
         sleeping = System.nanoTime();
-        outState.putString(TASK_KEY, gson.toJson(mTask));
+        outState.putString(SESSION_KEY, gson.toJson(mSession));
         outState.putBoolean(WORKING_KEY, workingBoolean.isValue());
         outState.putLong(ELAPSED_SECONDS, mSeconds);
         outState.putLong(OFFTIME_MS, sleeping);
-        outState.putInt(WORKING_SUBTASK, workingSubtask);
+        outState.putInt(WORKING_TASK, workingTask);
     }
 
 
@@ -119,30 +117,29 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         // Inflate the layout for this fragment
         setRetainInstance(true);
         project = gson.fromJson(getArguments().getString("KEY"), Project.class);
-        if (mTask == null)
-            mTask = new Task(project);
+        if (mSession == null)
+            mSession = new Session(project);
 
         if (getArguments().get("TITLE") != null) {
-            mTask.setTitle(getArguments().get("TITLE").toString());
+            mSession.setTitle(getArguments().get("TITLE").toString());
         }
-        subtasks = project.getSubtasks();
-        listItems = new TextView[subtasks.size()];
+        tasks = project.getTasks();
+        listItems = new TextView[tasks.size()];
         View rootView = inflater.inflate(R.layout.fragment_stopwatch, container, false);
         saveBtn = (ImageView) rootView.findViewById(R.id.saveSession);
-        runningSubtaskTv = (TextView) rootView.findViewById(R.id.working_subtask);
+        runningTaskTv = (TextView) rootView.findViewById(R.id.working_subtask);
         timeTv = (TextView) rootView.findViewById(R.id.stopwatch);
         controlBtn = (ImageView) rootView.findViewById(R.id.start_done);
         sessionTitle = (TextView) rootView.findViewById(R.id.sessionTitle);
         dateTV=(TextView)rootView.findViewById(R.id.sessionDate);
-        DateTime dateTime=new DateTime((long)mTask.getDateInMs(),DateTimeZone.forTimeZone(TimeZone.getDefault()));
-        dateTV.setText(dateTime.toString("d/M/Y  H:m:s"));
-        if (mTask.getTitle() != null && mTask.getTitle().length() > 0)
-            sessionTitle.setText(mTask.getTitle());
+        dateTV.setText(getDateString(mSession.getDateInMs()));
+        if (mSession.getTitle() != null && mSession.getTitle().length() > 0)
+            sessionTitle.setText(mSession.getTitle());
         initiateLinearList(rootView);
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (HandleData.saveSession(mTask, new File(getActivity().getFilesDir(), project.getProjectName()))) {
+                if (DataHandler.saveSession(mSession, new File(getActivity().getFilesDir(), project.getProjectName()))) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
                     saveState=SaveState.SAVED;
                 } else {
@@ -176,7 +173,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         TextViewListener texViewListener = null;
         for (int i = 0; i < listItems.length; i++) {
             listItems[i] = new TextView(getActivity());
-            listItems[i].setText(subtasks.get(i));
+            listItems[i].setText(tasks.get(i));
             if (140 * listItems.length < width)
                 listItems[i].setWidth(width / listItems.length);
             else
@@ -192,7 +189,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
                 listItems[i].setBackgroundResource(R.drawable.tvselector);
                 listItems[i].setSelected(true);
                 texViewListener = new TextViewListener();
-                runningSubtaskTv.setText(listItems[i].getText().toString());
+                runningTaskTv.setText(listItems[i].getText().toString());
             } else {
                 listItems[i].setSelected(false);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -217,6 +214,12 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         System.out.println("OnActivityCreated");
         savedBundle = savedInstanceState;
         activityDestroyed = true;
+    }
+
+    public static String getDateString(Long dateInMs) {
+        return (new DateTime(dateInMs,DateTimeZone.forTimeZone(TimeZone.getDefault())))
+                .toString("d/M/Y  H:m:s");
+
     }
 
 
@@ -263,7 +266,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                if (HandleData.saveSession(mTask, new File(getActivity().getFilesDir(), project.getProjectName()))) {
+                if (DataHandler.saveSession(mSession, new File(getActivity().getFilesDir(), project.getProjectName()))) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
                     saveState=SaveState.SAVED;
                 } else {
@@ -334,13 +337,13 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
                saveState= (saveState == SaveState.SAVED ? SaveState.UPDATES_NOT_SAVED:SaveState.SAVED.NOT_SAVED);
                 controlBtn.setActivated(true);
                 if (!override)
-                    mSeconds = mTask.getSubtasks().get(subtasks.get(workingSubtask));
+                    mSeconds = mSession.getTasks().get(tasks.get(workingTask));
                 stopwatchThread = new Thread(new RunnableStopWatch());
                 stopwatchThread.start();
 
             } else {
                 controlBtn.setActivated(false);
-                mTask.getSubtasks().put(subtasks.get(workingSubtask), mSeconds);
+                mSession.getTasks().put(tasks.get(workingTask), mSeconds);
                 stopwatchThread.interrupt();
             }
 
@@ -358,7 +361,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
                 workingBoolean.setValue(false, false);
             for (int i = 0; i < listItems.length; i++) {
                 if (listItems[i] == v) {
-                    workingSubtask = i;
+                    workingTask = i;
                     break;
                 }
             }
@@ -373,8 +376,8 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
             }
             clickedView = (TextView) v;
             clickedView.setSelected(true);
-            runningSubtaskTv.setText(clickedView.getText().toString());
-            timeTv.setText(convertSecsToText(mTask.getSubtasks().get(subtasks.get(workingSubtask))));
+            runningTaskTv.setText(clickedView.getText().toString());
+            timeTv.setText(convertSecsToText(mSession.getTasks().get(tasks.get(workingTask))));
 
         }
 
