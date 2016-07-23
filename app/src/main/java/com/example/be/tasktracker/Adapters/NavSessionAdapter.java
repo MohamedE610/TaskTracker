@@ -21,13 +21,15 @@ public class NavSessionAdapter extends BaseAdapter {
     ArrayList<Session> sessions;
     Context mContext;
     LayoutInflater inflater;
+
+
     boolean checkedItems[];
 
-    public NavSessionAdapter(Context context, ArrayList<Session> sessions) {
+    public NavSessionAdapter(Context context, ArrayList<Session> sessions,boolean[]checkedItems) {
         this.mContext = context;
         this.sessions = sessions;
         inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        checkedItems = new boolean[sessions.size()];
+        this.checkedItems = checkedItems;
     }
     public void setSessions(ArrayList<Session> sessions){
         this.sessions = sessions;
@@ -92,6 +94,13 @@ public class NavSessionAdapter extends BaseAdapter {
         return convertView;
     }
 
+    public boolean[] getCheckedItems() {
+        return checkedItems;
+    }
+
+    public void setCheckedItems(boolean[] checkedItems) {
+        this.checkedItems = checkedItems;
+    }
     private static class ViewHolder {
         CheckBox checkBox;
         TextView titleTV;

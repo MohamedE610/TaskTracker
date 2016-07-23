@@ -1,15 +1,20 @@
 package com.example.be.tasktracker;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.Space;
 import android.support.v7.app.AlertDialog;
+import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -26,6 +31,7 @@ import com.example.be.tasktracker.DataModel.DataHandler;
 import com.example.be.tasktracker.DataModel.Project;
 
 import com.example.be.tasktracker.DataModel.Session;
+import com.example.be.tasktracker.Interfaces.OnBackStackPressedListener;
 import com.google.gson.Gson;
 
 import org.joda.time.DateTime;
@@ -41,9 +47,13 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
     private static final String ELAPSED_SECONDS = "ELAPSED";
     private static final String OFFTIME_MS = "OFFTIME";
     private static final String WORKING_TASK = "WORKING_TASK";
-    enum SaveState{SAVED,UPDATES_NOT_SAVED,NOT_SAVED,ABORT_SAVING}
-    SaveState saveState=SaveState.NOT_SAVED;
+
+    enum SaveState {SAVED, UPDATES_NOT_SAVED, NOT_SAVED, ABORT_SAVING}
+
+    final int NOTIFY_ID = 1;
+    SaveState saveState = SaveState.NOT_SAVED;
     TextView runningTaskTv;
+    NotificationManager mNotificationManager;
     TextView timeTv;
     TextView[] listItems;
     Project project;
@@ -51,71 +61,45 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
     ImageView controlBtn;
     Bundle savedBundle;
     ImageView saveBtn;
+    NotificationThread notificationThread;
     private int workingTask;
     Session mSession;
     Gson gson = new Gson();
     long sleeping = 0;
     Thread stopwatchThread = new Thread(new RunnableStopWatch());
     private long mSeconds = 0;
+
+
     private WorkingBoolean workingBoolean = new WorkingBoolean();
     private TextView sessionTitle;
-    private boolean activityDestroyed;
+    private boolean activityRecreated;
     TextView dateTV;
+    boolean cancel;
     //private OnFragmentInteractionListener mListener;
 
 
     @Override
-    public void onStart() {
-        super.onStart();
-        if (workingBoolean.isValue()) {
-            mSeconds += ((System.nanoTime() - sleeping) / 1000000000.0)+1;
-            timeTv.setText(convertSecsToText(mSeconds));
-            workingBoolean.setValue(true, true);
-        } else if (activityDestroyed && savedBundle != null && (savedBundle.getString(SESSION_KEY) != null)) {
-            mSession = gson.fromJson(savedBundle.getString(SESSION_KEY), Session.class);
-            mSeconds = savedBundle.getLong(ELAPSED_SECONDS);
-            if (savedBundle.getBoolean(WORKING_KEY)) {
-                sleeping = savedBundle.getLong(OFFTIME_MS);
-                mSeconds += ((System.nanoTime() - sleeping) / 1000000000.0)+1;
-                timeTv.setText(convertSecsToText(mSeconds));
-                workingTask = savedBundle.getInt(WORKING_TASK);
-                workingBoolean.setValue(true, true);
-
-            }
-
-        }
-        activityDestroyed = false;
-    }
-
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (workingBoolean.isValue()) {
-            stopwatchThread.interrupt();
-            mSession.getTasks().put(tasks.get(workingTask), mSeconds);
-        }
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        System.out.println("OnActivityCreated");
+        savedBundle = savedInstanceState;
+        activityRecreated = true;
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        System.out.println("Called onSaveInstanceState");
-
-        super.onSaveInstanceState(outState);
-        sleeping = System.nanoTime();
-        outState.putString(SESSION_KEY, gson.toJson(mSession));
-        outState.putBoolean(WORKING_KEY, workingBoolean.isValue());
-        outState.putLong(ELAPSED_SECONDS, mSeconds);
-        outState.putLong(OFFTIME_MS, sleeping);
-        outState.putInt(WORKING_TASK, workingTask);
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (!activityRecreated) {
+            savedBundle = savedInstanceState;
+            activityRecreated = true;
+        }
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        setRetainInstance(true);
+        //   setRetainInstance(true);
         project = gson.fromJson(getArguments().getString("KEY"), Project.class);
         if (mSession == null)
             mSession = new Session(project);
@@ -131,7 +115,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         timeTv = (TextView) rootView.findViewById(R.id.stopwatch);
         controlBtn = (ImageView) rootView.findViewById(R.id.start_done);
         sessionTitle = (TextView) rootView.findViewById(R.id.sessionTitle);
-        dateTV=(TextView)rootView.findViewById(R.id.sessionDate);
+        dateTV = (TextView) rootView.findViewById(R.id.sessionDate);
         dateTV.setText(getDateString(mSession.getDateInMs()));
         if (mSession.getTitle() != null && mSession.getTitle().length() > 0)
             sessionTitle.setText(mSession.getTitle());
@@ -141,7 +125,9 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
             public void onClick(View v) {
                 if (DataHandler.saveSession(mSession, new File(getActivity().getFilesDir(), project.getProjectName()))) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
-                    saveState=SaveState.SAVED;
+                    saveState = SaveState.SAVED;
+                    if (workingBoolean.isValue())
+                        workingBoolean.setValue(false, true);
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), "Error in Saving", Toast.LENGTH_SHORT).show();
                 }
@@ -155,8 +141,85 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         });
         hideKeyboard(getActivity());
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-
+        mNotificationManager =
+                (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
         return rootView;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (workingBoolean.isValue()) {
+            if (notificationThread != null && notificationThread.isAlive()) {
+                mSeconds = notificationThread.getSeconds();
+            } else
+                mSeconds += ((System.nanoTime() - sleeping) / 1000000000.0) + 1;
+            timeTv.setText(convertSecsToText(mSeconds));
+            workingBoolean.setValue(true, true);
+        } else if (activityRecreated && savedBundle != null && (savedBundle.getString(SESSION_KEY) != null)) {
+            mSession = gson.fromJson(savedBundle.getString(SESSION_KEY), Session.class);
+            mSeconds = savedBundle.getLong(ELAPSED_SECONDS);
+            if (savedBundle.getBoolean(WORKING_KEY)) {
+                sleeping = savedBundle.getLong(OFFTIME_MS);
+                mSeconds += ((System.nanoTime() - sleeping) / 1000000000.0) + 1;
+                timeTv.setText(convertSecsToText(mSeconds));
+                workingTask = savedBundle.getInt(WORKING_TASK);
+                workingBoolean.setValue(true, true);
+
+            }
+
+        }
+        activityRecreated = false;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        //if counter is running stop the StopwatchThread and start notification Background Thread
+        if (workingBoolean.isValue()) {
+            stopwatchThread.interrupt();
+            mSession.getTasks().put(tasks.get(workingTask), mSeconds);
+            getNotifictaionThread();
+            notificationThread.start();
+
+        }
+    }
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        System.out.println("Called onSaveInstanceState");
+
+        sleeping = System.nanoTime();
+        outState.putString(SESSION_KEY, gson.toJson(mSession));
+        outState.putBoolean(WORKING_KEY, workingBoolean.isValue());
+        outState.putLong(ELAPSED_SECONDS, mSeconds);
+        outState.putLong(OFFTIME_MS, sleeping);
+        outState.putInt(WORKING_TASK, workingTask);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.i("StopWatchFragment", "onDestroyFragment");
+    }
+
+    @Override
+    public boolean onBackPressed() {
+        //if the session isn't saved/updated show confirmation dialog
+        switch (saveState) {
+            case NOT_SAVED:
+                showDialog("Do you want to save this session ? ");
+                break;
+            case UPDATES_NOT_SAVED:
+                showDialog("Changes has been made to this session .. Do you want to save the changes ? ");
+                break;
+
+        }
+        //as this value is returned without waiting the result from dialog
+        return saveState == SaveState.SAVED || saveState == SaveState.ABORT_SAVING;
+
     }
 
     private void initiateLinearList(View rootView) {
@@ -208,16 +271,29 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         }
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        System.out.println("OnActivityCreated");
-        savedBundle = savedInstanceState;
-        activityDestroyed = true;
+    public WorkingBoolean getWorkingBoolean() {
+        return workingBoolean;
+    }
+
+    private NotificationCompat.Builder getBuilder() {
+        Intent notificationIntent = new Intent(getActivity(), MainActivity.class);
+        notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        notificationIntent.setAction(Intent.ACTION_MAIN);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getActivity(), 0, notificationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+      //  PendingIntent pendingIntent=PendingIntent.getActivity(getActivity(),1,new Intent(getActivity(),NewTaskActivity.class),PendingIntent.FLAG_CANCEL_CURRENT);
+        return new NotificationCompat.Builder(getActivity())
+                .setContentTitle(tasks.get(workingTask))
+                .setContentText(convertSecsToText(mSeconds))
+                .addAction(R.drawable.arrow,"Next",null)
+                .addAction(R.drawable.stopbtn,"Stop",null)
+                .setSmallIcon(R.drawable.icon).setContentIntent(pendingIntent);
     }
 
     public static String getDateString(Long dateInMs) {
-        return (new DateTime(dateInMs,DateTimeZone.forTimeZone(TimeZone.getDefault())))
+        return (new DateTime(dateInMs, DateTimeZone.forTimeZone(TimeZone.getDefault())))
                 .toString("d/M/Y  H:m:s");
 
     }
@@ -241,25 +317,10 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
     }
 
 
-    @Override
-    public boolean onBackPressed() {
-        switch (saveState){
-            case NOT_SAVED:
-                 showDialog("Do you want to save this session ? ");
-                break;
-            case UPDATES_NOT_SAVED:
-                 showDialog("Changes has been made to this session .. Do you want to save the changes ? ");
-                break;
-
-        }
-        return saveState==SaveState.SAVED||saveState==SaveState.ABORT_SAVING;
-
-    }
-
-
     private void showDialog(String s) {
-        if(workingBoolean.isValue())
-            workingBoolean.setValue(false,false);
+        cancel = false;
+        if (workingBoolean.isValue())
+            workingBoolean.setValue(false, false);
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Save Changes");
         builder.setMessage(s);
@@ -268,7 +329,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
             public void onClick(DialogInterface dialog, int which) {
                 if (DataHandler.saveSession(mSession, new File(getActivity().getFilesDir(), project.getProjectName()))) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
-                    saveState=SaveState.SAVED;
+                    saveState = SaveState.SAVED;
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), "Error in Saving", Toast.LENGTH_SHORT).show();
                 }
@@ -277,31 +338,52 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                 saveState=SaveState.ABORT_SAVING;
+                saveState = SaveState.ABORT_SAVING;
             }
         });
 
-        builder.setOnDismissListener(new DialogInterface.OnDismissListener(){
+        builder.setCancelable(true);
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                cancel = true;
+            }
+        });
+
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
 
 
             @Override
             public void onDismiss(DialogInterface dialog) {
                 //so that we can keep dialog msg before fragment destroyed
-                  getActivity().onBackPressed();
+                // if cancel is clicked don't call onBack again and super.onBackPressed() won't
+                //be called ( frankly don't execute back )
+                if (!cancel) {
+                    getActivity().onBackPressed();
+                }
             }
         });
+
         builder.show();
     }
 
     class RunnableStopWatch implements Runnable {
+        NotificationCompat.Builder mNotifyBuilder;
+
         @Override
         public void run() {
+            mNotifyBuilder = getBuilder();
             try {
                 while (workingBoolean.isValue()) {
                     Thread.sleep(1000);
 
                     if (workingBoolean.isValue())
                         mSeconds++;
+
+                    mNotifyBuilder.setContentText(convertSecsToText(mSeconds));
+                    mNotificationManager.notify(
+                            NOTIFY_ID,
+                            mNotifyBuilder.build());
                     System.out.println("time elapse:: " + mSeconds);
                     try {
                         getActivity().runOnUiThread(new Runnable() {
@@ -329,25 +411,50 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
             return value;
         }
 
-        public void setValue(boolean value, boolean override) {
+        public void setValue(boolean value, boolean synchronizeSeconds) {
             this.value = value;
 
-            stopwatchThread.interrupt();
             if (value) {
-               saveState= (saveState == SaveState.SAVED ? SaveState.UPDATES_NOT_SAVED:SaveState.SAVED.NOT_SAVED);
+                saveState = (saveState == SaveState.SAVED ? SaveState.UPDATES_NOT_SAVED : SaveState.SAVED.NOT_SAVED);
                 controlBtn.setActivated(true);
-                if (!override)
+                //synchronize mSeconds with the elapsed time and don't read them from saved session
+                if (!synchronizeSeconds)
                     mSeconds = mSession.getTasks().get(tasks.get(workingTask));
                 stopwatchThread = new Thread(new RunnableStopWatch());
+                getNotifictaionThread();
+                if(notificationThread.isAlive()){
+                    mSeconds=notificationThread.getSeconds();
+                    notificationThread.interrupt();
+                }
                 stopwatchThread.start();
+
 
             } else {
                 controlBtn.setActivated(false);
                 mSession.getTasks().put(tasks.get(workingTask), mSeconds);
                 stopwatchThread.interrupt();
+                //notificationThread.interrupt();
+                mNotificationManager.cancel(NOTIFY_ID);
             }
 
         }
+    }
+
+    private boolean getNotifictaionThread() {
+        if (notificationThread == null) {
+            for (Thread thread : Thread.getAllStackTraces().keySet()) {
+                if (thread instanceof NotificationThread) {
+                    notificationThread = (NotificationThread) thread;
+                    return true;
+                }
+            }
+        }
+
+        if (notificationThread == null || !notificationThread.isAlive()) {
+            notificationThread = new NotificationThread(mSeconds);
+            notificationThread.setName("NotificationThread");
+        }
+        return false;
     }
 
     class TextViewListener implements View.OnClickListener {
@@ -396,4 +503,35 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
     }
 
 
+    private class NotificationThread extends Thread {
+        long seconds;
+        NotificationCompat.Builder mNotifyBuilder;
+
+        NotificationThread(long seconds) {
+            super();
+            this.seconds = seconds;
+            mNotifyBuilder = getBuilder();
+        }
+
+        @Override
+        public void run() {
+
+            try {
+
+                while (true) {
+                    Thread.sleep(1000);
+                    mNotifyBuilder.setContentText(convertSecsToText(++seconds));
+                    mNotificationManager.notify(
+                            NOTIFY_ID,
+                            mNotifyBuilder.build());
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public long getSeconds() {
+            return seconds;
+        }
+    }
 }

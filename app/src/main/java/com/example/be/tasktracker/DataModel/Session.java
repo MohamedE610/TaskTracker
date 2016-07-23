@@ -12,16 +12,8 @@ public class Session {
     transient Project project;
     HashMap<String,Long>tasks;
     String Title;
-
-    public Long getDateInMs() {
-        return dateInMs;
-    }
-
-    public void setDateInMs(Long dateInMs) {
-        this.dateInMs = dateInMs;
-    }
-
     Long dateInMs;
+
 
     public Session(Project project){
         this.project=project;
@@ -61,5 +53,22 @@ public class Session {
 
     public void setSubtasks(HashMap<String, Long> subtasks) {
         this.tasks = subtasks;
+    }
+
+    public Long getDateInMs() {
+        return dateInMs;
+    }
+
+    public void setDateInMs(Long dateInMs) {
+        this.dateInMs = dateInMs;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if(o instanceof Session)
+            return (((Session) o).getDateInMs().equals(this.dateInMs));
+
+        return false;
     }
 }

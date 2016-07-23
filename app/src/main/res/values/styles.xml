@@ -34,5 +34,14 @@
         <item name="android:background">@color/colorWhite</item>
         <item name="android:textColor">@color/backgroundColor</item>
     </style>
+<style name="TaskTrackerPlotTheme" parent="APDefacto.Dark">
+    <item name="android:background">@color/backgroundColor</item>
+    <item name="backgroundColor">@color/backgroundColor</item>
+    <item name="graphBackgroundColor">@color/backgroundColor</item>
+    <item name="gridPaddingTop">2dp</item>
+    <item name="gridPaddingBottom">2dp</item>
+    <item name="gridPaddingLeft">2dp</item>
+    <item name="gridPaddingRight">2dp</item>
 
+</style>
 </resources>

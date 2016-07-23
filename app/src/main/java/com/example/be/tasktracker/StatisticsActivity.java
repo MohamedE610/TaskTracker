@@ -23,11 +23,16 @@ import com.example.be.tasktracker.DataModel.DataHandler;
 import com.example.be.tasktracker.DataModel.Project;
 import com.example.be.tasktracker.DataModel.Session;
 import com.example.be.tasktracker.Plots.XYLineFragment;
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.util.ArrayList;
 
 public class StatisticsActivity extends AppCompatActivity {
+    public static final String SESSIONS_ARGS = "SESSIONS_ARGS";
+    private static final String XYFRAGTAG = "XYFRAGMENT";
+    private static final String CHECKED_SESSIONS_KEY = "CHECKED_SEESIONS";
+    private static final String CHOSEN_PROJECT_KEY = "CHOSEN_PROJECT";
     private DrawerLayout mDrawer;
     private Toolbar toolbar;
     //private NavigationView nvDrawer;
@@ -37,19 +42,26 @@ public class StatisticsActivity extends AppCompatActivity {
     NavProjectAdapter navProjectAdapter;
     NavSessionAdapter navSessionAdapter;
     Button allBT, noneBT;
-    // String[]arr={"Project A","Project B","Project C"};
-    //  String[]arr2={"Session A","Session B","Session C","Session D","Session E","Session F","Session G","Session I","Session J",};
     String[] arr3 = {"XY Line", "Graph B", "Graph C", "Graph D", "Graph B", "Graph C", "Graph D"};
     ArrayList<Project> projects;
     ArrayList<Session> sessions;
-    ArrayList<Session>chosedSessions;
+    boolean checkedSessions[];
     private Context mContext;
     SelectedProject selectedProject = new SelectedProject();
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBooleanArray(CHECKED_SESSIONS_KEY, checkedSessions);
+        outState.putInt(CHOSEN_PROJECT_KEY, selectedProject.getPosition());
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_statistics);
+        selectedProject = new SelectedProject();
+
         mContext = this;
         mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         // nvDrawer = (NavigationView) findViewById(R.id.nvView);
@@ -58,9 +70,17 @@ public class StatisticsActivity extends AppCompatActivity {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         projects = DataHandler.readProjects(this, new File(this.getFilesDir(), getString(R.string.projects_file_name)));
-        sessions = DataHandler.readSessions(this, projects.get(0));
+        if (savedInstanceState != null) {
+            checkedSessions = savedInstanceState.getBooleanArray(CHECKED_SESSIONS_KEY);
+            selectedProject = new SelectedProject(savedInstanceState.getInt(CHOSEN_PROJECT_KEY));
+        }
+        sessions = DataHandler.readSessions(this, projects.get(selectedProject.getPosition()));
+        if (checkedSessions == null)
+            checkedSessions = new boolean[sessions.size()];
+
+
         navProjectAdapter = new NavProjectAdapter(this, DataHandler.readProjectsNames(new File(this.getFilesDir(), getString(R.string.projects_file_name))), selectedProject);
-        navSessionAdapter = new NavSessionAdapter(this, sessions);
+        navSessionAdapter = new NavSessionAdapter(this, sessions, checkedSessions);
         drawerToggle = setupDrawerToggle();
         projectsLV = (ListView) findViewById(R.id.projectslistview);
         sessionsLV = (ListView) findViewById(R.id.sessionslistview);
@@ -73,13 +93,27 @@ public class StatisticsActivity extends AppCompatActivity {
         graphsLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(position==0){
-                    chosedSessions=navSessionAdapter.getSessions();
+                if (position == 0) {
+                    XYLineFragment xyLineFragment = (XYLineFragment) getSupportFragmentManager().findFragmentByTag(XYFRAGTAG);
+                    checkedSessions = navSessionAdapter.getCheckedItems();
+                    ArrayList<Session> tempSessions = new ArrayList<>();
+                    for (int i = 0; i < checkedSessions.length; i++) {
+                        if (checkedSessions[i])
+                            tempSessions.add(sessions.get(i));
+                    }
                     mDrawer.closeDrawer(GravityCompat.START);
-                    XYLineFragment xyLineFragment=new XYLineFragment();
-                    xyLineFragment.setSessions(chosedSessions);
-                    getSupportFragmentManager().beginTransaction().replace(R.id.nav_layout_container,xyLineFragment).commit();
                     drawerToggle.syncState();
+                    if (xyLineFragment == null) {
+                        xyLineFragment = new XYLineFragment();
+                        Bundle bundle = new Bundle();
+                        bundle.putString(SESSIONS_ARGS, (new Gson().toJson(tempSessions)));
+                        xyLineFragment.setArguments(bundle);
+                        getSupportFragmentManager().beginTransaction().replace(R.id.nav_layout_container, xyLineFragment, XYFRAGTAG).commit();
+                    } else {
+                        xyLineFragment.setSessions(tempSessions);
+                    }
+
+
                 }
             }
         });
@@ -142,6 +176,13 @@ public class StatisticsActivity extends AppCompatActivity {
 
     public class SelectedProject {
         int position;
+
+        public SelectedProject() {
+        }
+
+        public SelectedProject(int position) {
+            this.position = position;
+        }
 
         public void setPosition(int position) {
             this.position = position;

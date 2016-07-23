@@ -4,6 +4,7 @@ import android.content.Context;
 
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -48,28 +49,38 @@ import java.util.Date;
 
 
 public class CreateProjectFragment extends Fragment {
+    private static final String TASKS_LIST_KEY = "LIST_ITEMS";
+    private static final String SAVED_KEY = "SAVED";
     // TODO: Rename parameter arguments, choose  names that match
 
-    private Button  saveBtn;
+    private Button saveBtn;
     private ImageView addBtn;
-    private EditText titleTxt, subtaskTxt;
+    private EditText titleTxt, taskTxt;
     private ListView listView;
     private ArrayAdapter<String> arrayAdapter;
     private ArrayList<String> listItems;
-    private final int EDIT_ITEM_ID = 2;
     private final int DELETE_ITEM_ID = 1;
     private int selectedItem;
-    private JSONObject jsonObject;
-    private boolean fileExist;
     private Project project;
     private File file;
-    private ArrayList<String> existingProjects=new ArrayList<>();
+    private ArrayList<String> existingProjects = new ArrayList<>();
     private boolean saved = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        if(savedInstanceState!=null){
+            saved=savedInstanceState.getBoolean(SAVED_KEY);
+            listItems=savedInstanceState.getStringArrayList(TASKS_LIST_KEY);
+        }
         super.onCreate(savedInstanceState);
 
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putStringArrayList(TASKS_LIST_KEY, listItems);
+        outState.putBoolean(SAVED_KEY, saved);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -81,14 +92,15 @@ public class CreateProjectFragment extends Fragment {
         addBtn = (ImageView) rootView.findViewById(R.id.Addbtn);
         saveBtn = (Button) rootView.findViewById(R.id.saveBtn);
         titleTxt = (EditText) rootView.findViewById(R.id.projectTitle);
-        subtaskTxt = (EditText) rootView.findViewById(R.id.subtaskTitle);
+        taskTxt = (EditText) rootView.findViewById(R.id.subtaskTitle);
         listView = (ListView) rootView.findViewById(R.id.listView);
-        listItems = new ArrayList<String>();
+        if (listItems == null)
+            listItems = new ArrayList<String>();
         arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item, listItems);
         listView.setAdapter(arrayAdapter);
         registerForContextMenu(listView);
         LayoutInflater inflator = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-      //  View v = inflator.inflate(R.layout.edit_text_actionbar, null);
+        //  View v = inflator.inflate(R.layout.edit_text_actionbar, null);
         handleActions();
 
         return rootView;
@@ -100,7 +112,6 @@ public class CreateProjectFragment extends Fragment {
     public void onStart() {
         super.onStart();
         file = new File(getActivity().getFilesDir(), getString(R.string.projects_file_name));
-        jsonObject=new JSONObject();
         existingProjects = DataHandler.readProjectsNames(file);
 
     }
@@ -150,13 +161,13 @@ public class CreateProjectFragment extends Fragment {
         addBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (subtaskTxt.getText().toString().length() == 0) {
-                   Toast.makeText(getActivity().getApplicationContext(), "Enter Subtask Title", Toast.LENGTH_SHORT).show();
+                if (taskTxt.getText().toString().length() == 0) {
+                    Toast.makeText(getActivity().getApplicationContext(), "Enter Subtask Title", Toast.LENGTH_SHORT).show();
 
 
                 } else {
-                    arrayAdapter.add(subtaskTxt.getText().toString());
-                    subtaskTxt.setText("");
+                    arrayAdapter.add(taskTxt.getText().toString());
+                    taskTxt.setText("");
                 }
 
             }
@@ -213,10 +224,9 @@ public class CreateProjectFragment extends Fragment {
                     showErrorDialog("Please add at least one subtask to save the project");
                 else {
                     project = new Project(titleTxt.getText().toString(), listItems, System.currentTimeMillis());
-                    saved= DataHandler.saveNewProject(project,file,saved);
-                    if(saved)
-                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
-
+                    saved = DataHandler.saveNewProject(project, file, saved);
+                    if (saved)
+                        Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
 
 
                 }

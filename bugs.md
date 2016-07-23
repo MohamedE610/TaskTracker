@@ -2,7 +2,8 @@
 - fragment is recreated and recorded data is lost (fixed)
 - blanck screen on backpressed from choose project (fixed)
 - main menu is very small on some screens (fixed)
-- update statistics on sessions change
-- save button must stop timer
-- rotate on statistics activity 
+- update statistics on sessions change (fixed)
+- save button must stop timer (fixed)
+- rotate on statistics activity (fixed)
 - session date is too long
+- rotate on create project

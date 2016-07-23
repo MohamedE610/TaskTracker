@@ -3,14 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/xy_line_graph"
     tools:context=".Plots.XYLineFragment">
 
 
     <com.androidplot.xy.XYPlot
         android:id="@+id/plot"
-        style="@style/APDefacto.Dark"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        style="@style/TaskTrackerPlotTheme"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         ap:domainLabel="Task"
         ap:label="A Simple XY Plot"
         ap:rangeLabel="Time" />
