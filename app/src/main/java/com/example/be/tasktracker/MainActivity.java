@@ -7,6 +7,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import com.example.be.tasktracker.Interfaces.OnFragmentInteractionListener;
+
 public class MainActivity extends AppCompatActivity implements OnFragmentInteractionListener {
     Context mcontext;
 
@@ -16,7 +18,7 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
 
         setContentView(R.layout.activity_main);
         mcontext = this;
-        //getSupportActionBar().hide();
+        getSupportActionBar().hide();
 
 
 
@@ -27,14 +29,13 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
         Intent intent=new Intent();
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-
         switch (itemNum) {
-
             case CREATE_PROJECT:
+
                 intent.setClass(mcontext,CreateProjectActivity.class);
                 startActivity(intent);
                 break;
-            case NEW_TASK:
+            case NEW_SESSION:
                 intent.setClass(mcontext,NewTaskActivity.class);
                 startActivity(intent);
                 break;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
                 intent.setClass(mcontext,StatisticsActivity.class);
                 startActivity(intent);
                 break;
+
 
         }
 

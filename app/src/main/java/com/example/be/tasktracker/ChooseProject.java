@@ -1,21 +1,19 @@
 package com.example.be.tasktracker;
 
-import android.app.Activity;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import com.example.be.tasktracker.DataModel.HandleData;
+import com.example.be.tasktracker.Adapters.ProjectsAdapter;
+import com.example.be.tasktracker.DataModel.DataHandler;
 import com.example.be.tasktracker.DataModel.Project;
-import com.example.be.tasktracker.DataModel.Task;
+import com.example.be.tasktracker.DataModel.Session;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,7 +23,7 @@ public class ChooseProject extends Fragment {
     ListView projectsListView;
     EditText taskTitleText;
     ProjectsAdapter projectsAdapter;
-    Task mTask;
+    Session mTask;
     ArrayList<Project>projects=new ArrayList<>();
     File file;
     @Override
@@ -40,7 +38,7 @@ public class ChooseProject extends Fragment {
         View rootView= inflater.inflate(R.layout.fragment_choose_project, container, false);
         projectsListView= (ListView) rootView.findViewById(R.id.choose_project_listview);
         taskTitleText=(EditText)rootView.findViewById(R.id.taskTitle);
-        projects= HandleData.readProjects(getActivity(),new File(getActivity().getFilesDir(),getString(R.string.projects_file_name)));
+        projects= DataHandler.readProjects(getActivity(),new File(getActivity().getFilesDir(),getString(R.string.projects_file_name)));
        // stringArrayAdapter=new ArrayAdapter<String>(getActivity(),R.layout.start_list_item,new String[]{"this","that"});
         projectsAdapter=new ProjectsAdapter(getActivity(),projects);
         projectsListView.setAdapter(projectsAdapter);

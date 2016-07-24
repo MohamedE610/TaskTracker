@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.example.be.tasktracker.Interfaces.OnFragmentInteractionListener;
+
 public class MainFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -48,7 +50,7 @@ public class MainFragment extends Fragment {
         loadPatternBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onHomeItemSelected(OnFragmentInteractionListener.NEW_TASK);
+                mListener.onHomeItemSelected(OnFragmentInteractionListener.NEW_SESSION);
             }
         });
         statisticsBtn.setOnClickListener(new View.OnClickListener() {

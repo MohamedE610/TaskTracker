@@ -17,6 +17,7 @@
         </activity>
         <activity android:name=".CreateProjectActivity" />
         <activity android:name=".NewTaskActivity" />
+        <activity android:name=".StatisticsActivity" android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"></activity>
     </application>
 
 </manifest>

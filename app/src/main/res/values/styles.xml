@@ -9,7 +9,10 @@
         <item name="android:background">@color/backgroundColor</item>
         <item name="android:textColor">@color/colorText</item>
     </style>
-
+    <style name="ToolbarStyle" parent="Theme.AppCompat.Light.NoActionBar" >
+        <item name="android:background">@color/backgroundColor</item>
+        <item name="android:textColor">@color/colorText</item>
+    </style>
     <style name="ButtonStyle">
         <!-- <item name="android:background">@color/backgroundColor</item> -->
         <item name="android:background">@drawable/buttongbg</item>
@@ -21,19 +24,24 @@
         <item name="android:layout_centerHorizontal">true</item>
         <item name="android:clickable">true</item>
     </style>
+<style name="NavBtnStyle" parent="ButtonStyle">
+    <item name="android:layout_marginTop">0dp</item>
+    <item name="android:layout_height">20dp</item>
+   <!-- <item name="android:background">@color/differentBtnBG</item> -->
 
+</style>
     <style name="textstyle">
         <item name="android:background">@color/colorWhite</item>
         <item name="android:textColor">@color/backgroundColor</item>
     </style>
+<style name="TaskTrackerPlotTheme" parent="APDefacto.Dark">
+    <item name="android:background">@color/backgroundColor</item>
+    <item name="backgroundColor">@color/backgroundColor</item>
+    <item name="graphBackgroundColor">@color/backgroundColor</item>
+    <item name="gridPaddingTop">2dp</item>
+    <item name="gridPaddingBottom">2dp</item>
+    <item name="gridPaddingLeft">2dp</item>
+    <item name="gridPaddingRight">2dp</item>
 
-    <style name="AppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-    </style>
-
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-
+</style>
 </resources>

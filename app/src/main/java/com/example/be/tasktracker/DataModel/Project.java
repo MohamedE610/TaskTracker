@@ -32,7 +32,7 @@ public class Project {
         this.date = date;
     }
 
-    public ArrayList<String> getSubtasks() {
+    public ArrayList<String> getTasks() {
         return subtasks;
     }
 

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:descendantFocusability="blocksDescendants"
+
+    >
+    <RadioButton
+        android:id="@+id/projectRdBtn"
+        android:layout_weight="0"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:foreground="@color/colorWhite"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:clickable="false"
+        android:textIsSelectable="false"
+        />
+    <TextView
+        android:id="@+id/project_item_nv"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:textColor="@color/colorWhite"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical|center_horizontal"
+        android:text="Item"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:clickable="false"
+        android:textIsSelectable="false"
+        />
+
+</LinearLayout>

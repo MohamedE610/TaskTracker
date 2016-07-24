@@ -7,10 +7,6 @@
     <string name="JSON_ARRAY_KEY">values</string>
     <string name="action_edit">Edit</string>
     <string name="projects_file_name">com.example.tasktracker.projectsfile</string>
-    <string name="title_activity_statistics">Statistics Activity</string>
-
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-
-    <string name="action_settings">Settings</string>
+    <string name="open">Open</string>
+    <string name="close">Close</string>
 </resources>
