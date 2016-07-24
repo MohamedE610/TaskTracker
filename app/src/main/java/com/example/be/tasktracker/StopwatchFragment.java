@@ -1,6 +1,10 @@
 package com.example.be.tasktracker;
 
 import android.app.Activity;
+
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
@@ -213,12 +217,31 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         }
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        System.out.println("OnActivityCreated");
-        savedBundle = savedInstanceState;
-        activityDestroyed = true;
+
+    public WorkingBoolean getWorkingBoolean() {
+        return workingBoolean;
+    }
+
+    private NotificationCompat.Builder getBuilder() {
+        Intent notificationIntent = new Intent(getActivity(), MainActivity.class);
+        notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        notificationIntent.setAction(Intent.ACTION_MAIN);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getActivity(), 0, notificationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+
+      //  PendingIntent pendingIntent=PendingIntent.getActivity(getActivity(),1,new Intent(getActivity(),NewTaskActivity.class),PendingIntent.FLAG_CANCEL_CURRENT);
+        return new NotificationCompat.Builder(getActivity())
+                .setContentTitle(tasks.get(workingTask))
+                .setContentText(convertSecsToText(mSeconds))
+                .addAction(R.drawable.arrow,"Next",null)
+                .addAction(R.drawable.stopbtn,"Stop",null)
+                .setSmallIcon(R.drawable.icon).setContentIntent(pendingIntent);
+    }
+
+    public static String getDateString(Long dateInMs) {
+        return (new DateTime(dateInMs, DateTimeZone.forTimeZone(TimeZone.getDefault())))
+                .toString("d/M/Y  H:m:s");
     }
 
 
