@@ -13,8 +13,6 @@ public class Session {
     HashMap<String,Long>tasks;
     String Title;
     Long dateInMs;
-
-
     public Session(Project project){
         this.project=project;
         int x=project.getTasks().size();

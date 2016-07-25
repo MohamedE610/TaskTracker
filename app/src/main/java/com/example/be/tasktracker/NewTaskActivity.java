@@ -19,10 +19,6 @@ public class NewTaskActivity extends AppCompatActivity implements ChooseProject.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_task);
-       // Intent intent=getIntent();
-       // if(intent!=null && intent.getBooleanExtra("STOPWATCH",false)){
-      //      getSupportFragmentManager().beginTransaction().replace(R.id.activity_new_task, stopwatch, STOPWATCH_TAG).addToBackStack(null).commit();
-        //}
         if (findViewById(R.id.activity_new_task) != null) {
             if (savedInstanceState != null || getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG) != null) {
                 return;
@@ -36,17 +32,22 @@ public class NewTaskActivity extends AppCompatActivity implements ChooseProject.
     public void onBackPressed() {
 
         if (getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG) != null) {
-            if (((StopwatchFragment) getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG)).getWorkingBoolean().isValue()) {
+            if (((StopwatchFragment) getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG)).getSessionController().isWorking()) {
                 Intent startMain = new Intent(Intent.ACTION_MAIN);
                 startMain.addCategory(Intent.CATEGORY_HOME);
                 startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(startMain);
 
-            } else if (((OnBackStackPressedListener) getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG)).onBackPressed())
+            } else if (((OnBackStackPressedListener) getSupportFragmentManager().findFragmentByTag(STOPWATCH_TAG)).onBackPressed()){
+                SessionController.destroy();
                 super.onBackPressed();
 
-        } else
+            }
+
+        } else{
+            SessionController.destroy();
             super.onBackPressed();
+        }
 
     }
     @Override

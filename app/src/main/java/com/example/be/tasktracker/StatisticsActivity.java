@@ -33,6 +33,7 @@ public class StatisticsActivity extends AppCompatActivity {
     private static final String XYFRAGTAG = "XYFRAGMENT";
     private static final String CHECKED_SESSIONS_KEY = "CHECKED_SEESIONS";
     private static final String CHOSEN_PROJECT_KEY = "CHOSEN_PROJECT";
+    public static final String PROJECT_ARG ="PROJECT_ARG" ;
     private DrawerLayout mDrawer;
     private Toolbar toolbar;
     //private NavigationView nvDrawer;
@@ -106,11 +107,13 @@ public class StatisticsActivity extends AppCompatActivity {
                     if (xyLineFragment == null) {
                         xyLineFragment = new XYLineFragment();
                         Bundle bundle = new Bundle();
+                        bundle.putString(PROJECT_ARG,(new Gson().toJson(projects.get(selectedProject.getPosition()))));
                         bundle.putString(SESSIONS_ARGS, (new Gson().toJson(tempSessions)));
                         xyLineFragment.setArguments(bundle);
                         getSupportFragmentManager().beginTransaction().replace(R.id.nav_layout_container, xyLineFragment, XYFRAGTAG).commit();
                     } else {
                         xyLineFragment.setSessions(tempSessions);
+                        xyLineFragment.setProject(projects.get(selectedProject.getPosition()));
                     }
 
 

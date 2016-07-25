@@ -17,6 +17,7 @@ import com.androidplot.xy.PointLabeler;
 import com.androidplot.xy.SimpleXYSeries;
 import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYSeries;
+import com.example.be.tasktracker.DataModel.Project;
 import com.example.be.tasktracker.DataModel.Session;
 
 import com.example.be.tasktracker.R;
@@ -33,12 +34,14 @@ import java.util.Arrays;
 public class XYLineFragment extends Fragment {
     private static final String JSONSESSION = "JSESSIONS";
     private static final String COMPARE = "COMPARE";
+    private static final String JSONPROJECT ="JSONPROJECT" ;
     ArrayList<Session> sessions;
     ArrayList<XYSeries> xySeries;
     ArrayList<LineAndPointFormatter> lineAndPointFormatters;
-    String[] tasksNames;
+    ArrayList<String> tasksNames;
     float strokeWidth;
     String jsonSessions;
+    Project project;
     boolean compare = true;
 
     private XYPlot plot;
@@ -85,15 +88,20 @@ public class XYLineFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        String jsonProject;
         Type type = new TypeToken<ArrayList<Session>>() {
         }.getType();
         if (savedInstanceState != null) {
             jsonSessions = savedInstanceState.getString(JSONSESSION);
             compare = savedInstanceState.getBoolean(COMPARE);
-        } else
-            jsonSessions = (String) getArguments().get(StatisticsActivity.SESSIONS_ARGS);
+            jsonProject=savedInstanceState.getString(JSONPROJECT);
+        } else{
+            jsonSessions =  getArguments().getString(StatisticsActivity.SESSIONS_ARGS);
+            jsonProject=getArguments().getString(StatisticsActivity.PROJECT_ARG);
+            System.out.println("Fuck JSONsESSION "+jsonSessions);
+        }
 
-
+        project=new Gson().fromJson(jsonProject,Project.class);
         sessions = new Gson().fromJson(jsonSessions, type);
         // setRetainInstance(true);
         // System.out.println();
@@ -129,7 +137,7 @@ public class XYLineFragment extends Fragment {
     void buildGraph() {
         if(sessions.size()==0)
             return;
-        tasksNames = sessions.get(0).getTasksNames();
+        tasksNames = project.getTasks();
         xySeries = new ArrayList<>();
         lineAndPointFormatters = new ArrayList<>();
         strokeWidth = sessions.size() > 5 ? PixelUtils.dpToPix(2) : PixelUtils.dpToPix(5);
@@ -137,9 +145,9 @@ public class XYLineFragment extends Fragment {
             for (int i = 0; i < sessions.size(); i++) {
                 LineAndPointFormatter lineAndPointFormatter = new LineAndPointFormatter();
                 configureLineAndPointFormateer(lineAndPointFormatter, COLORS[i]);
-                Long[] vals = new Long[tasksNames.length];
+                Long[] vals = new Long[tasksNames.size()];
                 for (int j = 0; j < vals.length; j++)
-                    vals[j] = sessions.get(i).getTaskTime(tasksNames[j]);
+                    vals[j] = sessions.get(i).getTaskTime(tasksNames.get(j));
 
                 xySeries.add(new SimpleXYSeries(Arrays.asList(vals),
                         SimpleXYSeries.ArrayFormat.Y_VALS_ONLY,
@@ -148,12 +156,12 @@ public class XYLineFragment extends Fragment {
                 plot.addSeries(xySeries.get(i), lineAndPointFormatters.get(i));
             }
         } else {
-            Float[] vals = new Float[tasksNames.length];
+            Float[] vals = new Float[tasksNames.size()];
             LineAndPointFormatter lineAndPointFormatter = new LineAndPointFormatter();
             configureLineAndPointFormateer(lineAndPointFormatter, COLORS[0]);
-            for (int i = 0; i < tasksNames.length; i++) {
+            for (int i = 0; i < tasksNames.size(); i++) {
                 for (int j = 0; j < sessions.size(); j++) {
-                    vals[i] += sessions.get(j).getTaskTime(tasksNames[i]);
+                    vals[i] += sessions.get(j).getTaskTime(tasksNames.get(i));
                 }
                 vals[i] /= sessions.size();
             }
@@ -185,4 +193,7 @@ public class XYLineFragment extends Fragment {
         this.plot = plot;
     }
 
+    public void setProject(Project project) {
+        this.project = project;
+    }
 }
