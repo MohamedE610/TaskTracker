@@ -23,18 +23,25 @@ public class NotificationService extends Service {
     private SessionController mSessionController;
     //private boolean firstTime=true;
     final int NOTIFY_ID = 1;
+    final int NOTIFY_FORGROUND_ID = 2;
     public static final String ServiceAction_START="START";
     public static final String ServiceAction_STOP_HIDE="STOP_HIDE";
     public static final String ServiceAction_STOP="STOP";
     public static final String ServiceAction_NEXT="NEXT";
     public static final String ServiceAction_PREV="PREV";
     public static final String ServiceAction_CHOSED="CHOSED";
+    private static boolean alive=false;
     private NotificationThread mNotificationThread;
     private NotificationManager mNotificationManager;
 
     public NotificationService(){
         super();
     }
+
+    public static boolean isAlive() {
+        return alive;
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {return null;}
@@ -47,13 +54,15 @@ public class NotificationService extends Service {
         String action=intent.getAction();
         switch (action){
             case ServiceAction_START:
+                alive=true;
                 mNotificationThread=new NotificationThread();
+                startForeground(NOTIFY_ID,getBuilder().build());
                 mNotificationThread.start();
                 break;
             case ServiceAction_STOP_HIDE:
                 if(mNotificationThread!=null && mNotificationThread.isAlive())
                     mNotificationThread.interrupt();
-                mNotificationManager.cancel(NOTIFY_ID);
+                stopForeground(true);
                 stopSelf();
                 break;
             case ServiceAction_NEXT:
@@ -61,12 +70,10 @@ public class NotificationService extends Service {
             case ServiceAction_PREV:
                 break;
             case ServiceAction_CHOSED:
-
-
-                stopSelf();
-                break;
             case ServiceAction_STOP:
-
+                if(mNotificationThread!=null && mNotificationThread.isAlive())
+                    mNotificationThread.interrupt();
+                stopForeground(false);
                 stopSelf();
                 break;
 

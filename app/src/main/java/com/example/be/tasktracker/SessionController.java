@@ -1,5 +1,6 @@
 package com.example.be.tasktracker;
 
+import com.example.be.tasktracker.DataModel.Project;
 import com.example.be.tasktracker.DataModel.Session;
 import com.example.be.tasktracker.Interfaces.StopwatchObserver;
 
@@ -21,10 +22,12 @@ public  class SessionController{
     static boolean exist;
     ArrayList<String> tasks;
     ArrayList<StopwatchObserver>observers;
-    private SessionController(Session session){
-        mSession=session;
+    Project project;
+    private SessionController(Project project){
+        this.project=project;
+        mSession=new Session(project);
         observers=new ArrayList<>();
-        tasks=session.getProject().getTasks();
+        tasks=project.getTasks();
     }
     public void registerObserver(StopwatchObserver observer){
         observers.add(observer);
@@ -32,9 +35,9 @@ public  class SessionController{
     public void unRegisterObserver(StopwatchObserver observer){
         observers.remove(observer);
     }
-    public static SessionController getInstance(Session session){
+    public static SessionController getInstance(Project project){
         if(sessionController==null){
-            sessionController=new SessionController(session);
+            sessionController=new SessionController(project);
             exist=true;
         }
         return sessionController;
@@ -132,6 +135,9 @@ public  class SessionController{
     }
     public boolean isExist(){
         return exist;
+    }
+    public Project getProject() {
+        return project;
     }
 
 }

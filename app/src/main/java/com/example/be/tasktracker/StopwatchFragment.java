@@ -85,7 +85,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         //   setRetainInstance(true);
         project = gson.fromJson(getArguments().getString("KEY"), Project.class);
         if (mSessionController == null) {
-            mSessionController = SessionController.getInstance(new Session(project));
+            mSessionController = SessionController.getInstance(project);
         }
 
         if (getArguments().get("TITLE") != null) {
@@ -107,7 +107,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (DataHandler.saveSession(mSessionController.getmSession(), new File(getActivity().getFilesDir(), project.getProjectName()))) {
+                if (DataHandler.saveSession(mSessionController.getmSession(), new File(getActivity().getFilesDir(), project.getProjectName()),mSessionController.getSavedState())) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
                     mSessionController.setSavedState(SessionController.SaveState.SAVED);
                     if (mSessionController.isWorking())
@@ -234,7 +234,10 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                if (DataHandler.saveSession(mSessionController.getmSession(), new File(getActivity().getFilesDir(), project.getProjectName()))) {
+                if (DataHandler.saveSession(mSessionController.getmSession(),
+                        new File(getActivity().getFilesDir(), project.getProjectName()),
+                mSessionController.getSavedState()))
+                {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
                     mSessionController.setSavedState(SessionController.SaveState.SAVED);
                 } else {
@@ -364,9 +367,10 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         else{
             controlBtn.setActivated(false);
           //  updateTimeTextView();
-            Intent startIntent = new Intent(getActivity(), NotificationService.class);
-            startIntent.setAction(NotificationService.ServiceAction_STOP_HIDE);
-            getActivity().startService(startIntent);
+            Intent stopIntent = new Intent(getActivity(), NotificationService.class);
+            stopIntent.setAction(NotificationService.ServiceAction_STOP_HIDE);
+            getActivity().startService(stopIntent);
+
             //stopService
         }
     }

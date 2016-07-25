@@ -3,6 +3,7 @@ package com.example.be.tasktracker.DataModel;
 import android.content.Context;
 
 import com.example.be.tasktracker.R;
+import com.example.be.tasktracker.SessionController;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
@@ -135,7 +136,7 @@ public class DataHandler {
         return projects;
     }
 
-    public static boolean saveSession(Session task, File file) {
+    public static boolean saveSession(Session task, File file, SessionController.SaveState saveState) {
         JSONArray jsonArray = null;
         Gson gson = new Gson();
         try {
@@ -145,7 +146,10 @@ public class DataHandler {
 
             } else
                 jsonArray = (new JSONObject(getJsonStr(file))).getJSONArray("values");
-            jsonArray.put(jsonArray.length(), gson.toJson(task, Session.class));
+            if (saveState == SessionController.SaveState.NOT_SAVED)
+                jsonArray.put(jsonArray.length(), gson.toJson(task, Session.class));
+            else
+                jsonArray.put(jsonArray.length()-1, gson.toJson(task, Session.class));
             System.out.println(gson.toJson(jsonArray, JSONArray.class));
             writeJsonToFile(gson.toJson(jsonArray, JSONArray.class), file);
 
@@ -173,7 +177,7 @@ public class DataHandler {
             Gson gson = new Gson();
             for (int i = 0; i < tempJsArray.length(); i++) {
                 System.out.println(tempJsArray.getString(i));
-                Session session=gson.fromJson(tempJsArray.getString(i),Session.class);
+                Session session = gson.fromJson(tempJsArray.getString(i), Session.class);
                 sessions.add(session);
             }
         } catch (JSONException e1) {
