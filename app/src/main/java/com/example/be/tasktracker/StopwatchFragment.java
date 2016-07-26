@@ -2,7 +2,6 @@ package com.example.be.tasktracker;
 
 import android.app.Activity;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,7 +9,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.Space;
 import android.support.v7.app.AlertDialog;
 import android.util.DisplayMetrics;
@@ -29,8 +27,6 @@ import android.widget.Toast;
 
 import com.example.be.tasktracker.DataModel.DataHandler;
 import com.example.be.tasktracker.DataModel.Project;
-import com.example.be.tasktracker.DataModel.Session;
-import com.example.be.tasktracker.Interfaces.OnBackStackPressedListener;
 import com.example.be.tasktracker.Interfaces.StopwatchObserver;
 import com.example.be.tasktracker.Services.NotificationService;
 import com.google.gson.Gson;
@@ -45,7 +41,7 @@ import java.util.TimeZone;
 /**
  * Created by BE on 7/25/2016.
  */
-public class StopwatchFragment extends Fragment implements OnBackStackPressedListener,StopwatchObserver {
+public class StopwatchFragment extends Fragment implements StopwatchObserver {
     SessionController mSessionController;
     TextView runningTaskTv;
     NotificationManager mNotificationManager;
@@ -156,7 +152,7 @@ public class StopwatchFragment extends Fragment implements OnBackStackPressedLis
         Log.i("StopWatchFragment", "onDestroyFragment");
     }
 
-    @Override
+
     public boolean onBackPressed() {
         //if the session isn't saved/updated show confirmation dialog
         switch (mSessionController.getSavedState()) {

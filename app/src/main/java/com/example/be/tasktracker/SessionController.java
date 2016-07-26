@@ -10,12 +10,12 @@ import java.util.ArrayList;
  * Created by BE on 7/25/2016.
  */
 public  class SessionController{
-    public enum SaveState{SAVED, UPDATES_NOT_SAVED, NOT_SAVED, ABORT_SAVING}
+    public enum SaveState{SAVED, UPDATES_NOT_SAVED, NOT_SAVED, ABORT_SAVING,NEW}
     private final int STATE_CHANGED=1;
     private final int INCREASED=2;
     private static SessionController sessionController;
     int workingTask;
-    SaveState savedState= SaveState.NOT_SAVED;
+    SaveState savedState= SaveState.NEW;
     Session mSession;
     int mSeconds;
     boolean working;

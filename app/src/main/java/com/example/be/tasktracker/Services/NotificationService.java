@@ -62,8 +62,10 @@ public class NotificationService extends Service {
             case ServiceAction_STOP_HIDE:
                 if(mNotificationThread!=null && mNotificationThread.isAlive())
                     mNotificationThread.interrupt();
+                alive=false;
                 stopForeground(true);
                 stopSelf();
+
                 break;
             case ServiceAction_NEXT:
                 break;
@@ -73,6 +75,7 @@ public class NotificationService extends Service {
             case ServiceAction_STOP:
                 if(mNotificationThread!=null && mNotificationThread.isAlive())
                     mNotificationThread.interrupt();
+                alive=false;
                 stopForeground(false);
                 stopSelf();
                 break;
@@ -130,5 +133,11 @@ public class NotificationService extends Service {
         }
 
 
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        alive=false;
     }
 }

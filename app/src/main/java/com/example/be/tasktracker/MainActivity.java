@@ -20,6 +20,9 @@ public class MainActivity extends AppCompatActivity implements OnFragmentInterac
         if (NotificationService.isAlive()) {
             Intent intent = new Intent(this, NewTaskActivity.class);
             intent.setAction(NewTaskActivity.RESUME_STOPWATCH);
+            //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            //intent.setFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
             startActivity(intent);
         }
         setContentView(R.layout.activity_main);

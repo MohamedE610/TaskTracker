@@ -6,6 +6,7 @@
 - save button must stop timer (fixed)
 - rotate on statistics activity (fixed)
 - rotate on create project (fixed)
+- backpressed when App is resumed strange behavior (fixed)
 - session date is too long
 - stopwatchfragment digit missing from date in mins
-- backpressed when App is resumed strange behavior
+- fix more than 20 session in statistics
