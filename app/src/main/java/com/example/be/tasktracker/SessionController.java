@@ -91,10 +91,14 @@ public  class SessionController{
         for (int i=0;i<observers.size();i++)
             observers.get(i).onSecondsIncreased(mSeconds);
     }*/
-    public void increase(){
-        ++mSeconds;
+    public void increase(int i){
+        mSeconds+=i;
         notifyObservers(INCREASED,false);
 
+    }
+    public void setmSeconds(int secs){
+        mSeconds=secs;
+        notifyObservers(INCREASED,false);
     }
 
     public boolean isWorking() {
@@ -132,9 +136,6 @@ public  class SessionController{
     }
     public String getWorkingTaskName(){
         return tasks.get(workingTask);
-    }
-    public boolean isExist(){
-        return exist;
     }
     public Project getProject() {
         return project;

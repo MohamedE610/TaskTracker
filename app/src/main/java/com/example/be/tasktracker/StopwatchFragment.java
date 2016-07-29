@@ -11,15 +11,19 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.Space;
 import android.support.v7.app.AlertDialog;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -95,6 +99,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
         timeTv = (TextView) rootView.findViewById(R.id.stopwatch);
         controlBtn = (ImageView) rootView.findViewById(R.id.start_done);
         sessionTitle = (TextView) rootView.findViewById(R.id.sessionTitle);
+
         dateTV = (TextView) rootView.findViewById(R.id.sessionDate);
         dateTV.setText(getDateString(mSessionController.getmSession().getDateInMs()));
         if (mSessionController.getmSession().getTitle() != null && mSessionController.getmSession().getTitle().length() > 0)
@@ -103,7 +108,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (DataHandler.saveSession(mSessionController.getmSession(), new File(getActivity().getFilesDir(), project.getProjectName()),mSessionController.getSavedState())) {
+                if (DataHandler.saveSession(mSessionController.getmSession(), new File(getActivity().getFilesDir(), project.getProjectName()), mSessionController.getSavedState())) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
                     mSessionController.setSavedState(SessionController.SaveState.SAVED);
                     if (mSessionController.isWorking())
@@ -135,11 +140,13 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
         }
         activityRecreated = false;  //commented
     }
+
     @Override
     public void onStop() {
         super.onStop();
         mSessionController.unRegisterObserver(this);
     }
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         System.out.println("Called onSaveInstanceState");
@@ -165,7 +172,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
 
         }
         //as this value is returned without waiting the result from dialog
-        return mSessionController.getSavedState()== SessionController.SaveState.SAVED || mSessionController.getSavedState() == SessionController.SaveState.ABORT_SAVING;
+        return mSessionController.getSavedState() == SessionController.SaveState.SAVED || mSessionController.getSavedState() == SessionController.SaveState.ABORT_SAVING;
 
     }
 
@@ -232,8 +239,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
             public void onClick(DialogInterface dialog, int which) {
                 if (DataHandler.saveSession(mSessionController.getmSession(),
                         new File(getActivity().getFilesDir(), project.getProjectName()),
-                mSessionController.getSavedState()))
-                {
+                        mSessionController.getSavedState())) {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
                     mSessionController.setSavedState(SessionController.SaveState.SAVED);
                 } else {
@@ -274,7 +280,6 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
     }
 
 
-
     class TextViewListener implements View.OnClickListener {
         public TextView clickedView = listItems[0];
 
@@ -306,6 +311,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
         }
 
     }
+
     public static void hideKeyboard(Context ctx) {
         InputMethodManager inputManager = (InputMethodManager) ctx
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -327,8 +333,16 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
 
     public static String convertSecsToText(long seconds) {
         StringBuilder sb = new StringBuilder();
-        int min = (int) (seconds / 60);
+        int hours = (int) (seconds / 3600);
+        int min = (int) (seconds / 60) - (hours * 60);
         int secs = (int) (seconds % 60);
+        if (hours > 0) {
+            if (hours < 10)
+                sb.append("0" + hours);
+            else
+                sb.append(hours);
+            sb.append(":");
+        }
         if (min < 10)
             sb.append("0" + min);
         else
@@ -349,20 +363,19 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
     }
 
 
-
     @Override
     public void onStopwatchStateChanged(boolean working) {
-        if(working){
+        if (working) {
             controlBtn.setActivated(true);
             updateTimeTextView();
             //startService
             Intent startIntent = new Intent(getActivity(), NotificationService.class);
             startIntent.setAction(NotificationService.ServiceAction_START);
+            //startIntent.put
             getActivity().startService(startIntent);
-        }
-        else{
+        } else {
             controlBtn.setActivated(false);
-          //  updateTimeTextView();
+            //  updateTimeTextView();
             Intent stopIntent = new Intent(getActivity(), NotificationService.class);
             stopIntent.setAction(NotificationService.ServiceAction_STOP_HIDE);
             getActivity().startService(stopIntent);
@@ -370,6 +383,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
             //stopService
         }
     }
+
     private void updateTimeTextView() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
