@@ -30,7 +30,7 @@ public class NotificationService extends Service {
     private final IBinder mBinder = new LocalBinder(this);
     private SessionController mSessionController;
     //private boolean firstTime=true;
-    final int NOTIFY_ID = 1;
+    public static final int NOTIFY_ID = 1;
     final int NOTIFY_FORGROUND_ID = 2;
     public static final String ServiceAction_START = "START";
     public static final String ServiceAction_STOP_HIDE = "STOP_HIDE";
@@ -39,14 +39,19 @@ public class NotificationService extends Service {
     public static final String ServiceAction_PREV = "PREV";
     public static final String ServiceAction_CHOSED = "CHOSED";
     private static boolean alive = false;
-    boolean sleep=false;
-    long sleepTime=0;
-    int secsWas=0;
-    long startTime=-1;
     private StringBuilder stringBuilder;
     private NotificationThread mNotificationThread;
-    private NotificationManager mNotificationManager;
+    Intent playIntent ;
+    Intent stopIntent ;
+    Intent nextIntent;
+    Intent preIntent ;
+
     private File file;
+    private PendingIntent pendingPlayIntent;
+    private PendingIntent pendingStopIntent;
+    private PendingIntent pendingNextIntent;
+    private PendingIntent pendingPreIntent;
+    private String action;
 
     public NotificationService() {
         super();
@@ -64,20 +69,22 @@ public class NotificationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (mNotificationManager == null)
-            mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+
         if (mSessionController == null && SessionController.exists())
             mSessionController = SessionController.getInstance(null);
-        String action = intent.getAction();
+        action = intent.getAction();
+        intializeIntents();
+        mNotificationThread = NotificationThread.getInstance(getBuilder(), this, mSessionController);
+        startForeground(NOTIFY_ID,getBuilder().build());
         switch (action) {
             case ServiceAction_START:
-                file=getFile();
-                stringBuilder=new StringBuilder();
+                file = getFile();
                 alive = true;
-                mNotificationThread = new NotificationThread();
+
                 if (!mSessionController.isWorking())
                     mSessionController.setWorking(true);
-                startForeground(NOTIFY_ID, getBuilder().build());
+              //  startForeground(NOTIFY_ID);
                 mNotificationThread.start();
                 break;
             case ServiceAction_STOP_HIDE:
@@ -86,12 +93,8 @@ public class NotificationService extends Service {
                 alive = false;
                 if (mSessionController.isWorking())
                     mSessionController.setWorking(false);
-                try {
-                    DataHandler.writeJsonToFile(stringBuilder.toString(),file);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 stopForeground(true);
+                ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NotificationService.NOTIFY_ID);
                 stopSelf();
 
                 break;
@@ -107,13 +110,34 @@ public class NotificationService extends Service {
                 if (mSessionController.isWorking())
                     mSessionController.setWorking(false);
                 stopForeground(false);
-                stopSelf();
+                //stopSelf();
                 break;
 
         }
 
         return START_NOT_STICKY;
         // return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void intializeIntents() {
+        playIntent = new Intent(this, NotificationService.class);
+        stopIntent = new Intent(this, NotificationService.class);
+        nextIntent = new Intent(this, NotificationService.class);
+        preIntent = new Intent(this, NotificationService.class);
+        playIntent.setAction(ServiceAction_START);
+        stopIntent.setAction(ServiceAction_STOP);
+        nextIntent.setAction(ServiceAction_NEXT);
+        preIntent.setAction(ServiceAction_PREV);
+        pendingPlayIntent = PendingIntent.getService(this, 0, playIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        pendingStopIntent = PendingIntent.getService(this, 0, stopIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+        pendingNextIntent = PendingIntent.getService(this, 0, nextIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+        pendingPreIntent = PendingIntent.getService(this, 0, preIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     public SessionController getSessionController() {
@@ -127,83 +151,38 @@ public class NotificationService extends Service {
         notificationIntent.setAction(Intent.ACTION_MAIN);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
+        // Intent play = new Intent(this, NotificationService.class);
+        //startIntent.setAction(NotificationService.ServiceAction_START);
 
 
         //  PendingIntent pendingIntent=PendingIntent.getActivity(getActivity(),1,new Intent(getActivity(),NewTaskActivity.class),PendingIntent.FLAG_CANCEL_CURRENT);
-        return new NotificationCompat.Builder(this)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setContentTitle(mSessionController.getWorkingTaskName())
                 .setContentText(StopwatchFragment.convertSecsToText(mSessionController.getmSeconds()))
-                .setSmallIcon(R.drawable.icon).setContentIntent(pendingIntent);
-    }
-
-    private class NotificationThread extends Thread {
-        long seconds;
-        NotificationCompat.Builder mNotifyBuilder;
-
-
-
-        NotificationThread() {
-            super();
-            mNotifyBuilder = getBuilder();
-        }
-
-        @Override
-        public void run() {
-
-            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-            try {
-
-                while (true) {
-
-                    if(Build.VERSION.SDK_INT <20){
-                        if(!pm.isScreenOn()&&!sleep){
-                            secsWas=mSessionController.getmSeconds();
-                            sleepTime=System.currentTimeMillis();
-                            sleep=true;
-                            //stringBuilder.append("NOTIFICATION_SERVICE,Thread is still Running time = "+sleepTime+" current seconds "+mSessionController.getmSeconds()+'\n');
-                        }
-                        else if(sleep&&pm.isScreenOn()){
-                            mSessionController.setmSeconds((int) (Math.ceil((double) ((System.currentTimeMillis()-sleepTime)/1000.0))+secsWas));
-                            sleep=false;
-                          //  stringBuilder.append("NOTIFICATION_SERVICE,Thread is Awake now = "+System.currentTimeMillis()+" Sleep was "+sleepTime +" current seconds "+mSessionController.getmSeconds() +'\n');
-                        }
-                    }
-                    else{
-                        if(!pm.isInteractive()&&!sleep){
-                            secsWas=mSessionController.getmSeconds();
-                            sleepTime=System.currentTimeMillis();
-                            sleep=true;
-                        }
-                        else if(sleep&&pm.isInteractive()){
-                            mSessionController.setmSeconds((int) (Math.ceil((double) ((System.currentTimeMillis()-sleepTime)/1000.0))+secsWas));
-                            sleep=false;
-                        }
-
-                    }
-                    Thread.sleep(1000);
-                    mSessionController.increase(1);
-                    mNotifyBuilder.setContentText(StopwatchFragment.convertSecsToText(mSessionController.getmSeconds()));
-                    mNotificationManager.notify(
-                            NOTIFY_ID,
-                            mNotifyBuilder.build());
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+                .setSmallIcon(R.drawable.icon).setContentIntent(pendingIntent)
+                .setCategory(MEDIA_SESSION_SERVICE)
+                .addAction(R.drawable.previousnotification, null, pendingPreIntent);
+        if (action == ServiceAction_START)
+            builder.addAction(R.drawable.stopnotification, null, pendingStopIntent);
+        else
+            builder.addAction(R.drawable.playnotification, null, pendingPlayIntent);
+        builder.addAction(R.drawable.nextnotification, null, pendingPlayIntent);
+        return builder;
 
 
     }
+
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         alive = false;
     }
+
     public File getFile() {
         File path = Environment.getExternalStorageDirectory();
         File file = new File(path, "test_task_tracker.txt");
-        if(!file.exists())
+        if (!file.exists())
             try {
                 file.createNewFile();
                 System.out.println("File_Created");
@@ -212,4 +191,86 @@ public class NotificationService extends Service {
             }
         return file;
     }
+}
+
+class NotificationThread extends Thread {
+    private NotificationManager mNotificationManager;
+    boolean sleep = false;
+    long sleepTime = 0;
+    int secsWas = 0;
+    private NotificationCompat.Builder mNotifyBuilder;
+    private static NotificationThread mNotificationThread;
+    private NotificationService mNotificationService;
+    private SessionController mSessionController;
+
+    public static NotificationThread getInstance(NotificationCompat.Builder notifyBuilder, NotificationService service, SessionController sessionController) {
+        if (mNotificationThread == null)
+            mNotificationThread = new NotificationThread(notifyBuilder, service, sessionController);
+        return mNotificationThread;
+    }
+
+
+    private NotificationThread(NotificationCompat.Builder notifyBuilder, NotificationService service, SessionController sessionController) {
+        super();
+        mNotifyBuilder = notifyBuilder;
+        mNotificationService = service;
+        mSessionController = sessionController;
+        mNotificationManager = (NotificationManager) service.getSystemService(Context.NOTIFICATION_SERVICE);
+
+
+    }
+
+    @Override
+    public void run() {
+
+        PowerManager pm = (PowerManager) mNotificationService.getSystemService(Context.POWER_SERVICE);
+        try {
+
+            while (true) {
+
+                if (Build.VERSION.SDK_INT < 20) {
+                    if (!pm.isScreenOn() && !sleep) {
+                        secsWas = mSessionController.getmSeconds();
+                        sleepTime = System.currentTimeMillis();
+                        sleep = true;
+                        //stringBuilder.append("NOTIFICATION_SERVICE,Thread is still Running time = "+sleepTime+" current seconds "+mSessionController.getmSeconds()+'\n');
+                    } else if (sleep && pm.isScreenOn()) {
+                        mSessionController.setmSeconds((int) (Math.ceil((double) ((System.currentTimeMillis() - sleepTime) / 1000.0)) + secsWas));
+                        sleep = false;
+                        //  stringBuilder.append("NOTIFICATION_SERVICE,Thread is Awake now = "+System.currentTimeMillis()+" Sleep was "+sleepTime +" current seconds "+mSessionController.getmSeconds() +'\n');
+                    }
+                } else {
+                    if (!pm.isInteractive() && !sleep) {
+                        secsWas = mSessionController.getmSeconds();
+                        sleepTime = System.currentTimeMillis();
+                        sleep = true;
+                    } else if (sleep && pm.isInteractive()) {
+                        mSessionController.setmSeconds((int) (Math.ceil((double) ((System.currentTimeMillis() - sleepTime) / 1000.0)) + secsWas));
+                        sleep = false;
+                    }
+
+                }
+                Thread.sleep(1000);
+                mSessionController.increase(1);
+                mNotifyBuilder.setContentText(StopwatchFragment.convertSecsToText(mSessionController.getmSeconds()));
+                mNotificationManager.notify(
+                        NotificationService.NOTIFY_ID,
+                        mNotifyBuilder.build());
+
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            clear();
+        }
+    }
+
+    private void clear() {
+        mNotifyBuilder = null;
+        mNotificationService = null;
+        mSessionController = null;
+        mNotificationManager = null;
+        mNotificationThread = null;
+    }
+
+
 }

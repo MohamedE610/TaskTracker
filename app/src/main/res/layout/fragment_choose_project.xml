@@ -25,16 +25,16 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical|center_horizontal"
             android:textSize="20dp"
-            android:text=" Task Title "
+            android:text=" Session Title "
             android:paddingRight="10dp"
             />
 
         <EditText
-            android:id="@+id/taskTitle"
+            android:id="@+id/sessionET"
+            android:hint="Untitled Session"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|center_horizontal"
-            android:hint="Task Title" />
+            android:layout_gravity="center_vertical|center_horizontal" />
     </LinearLayout>
     <FrameLayout
         android:layout_width="match_parent"

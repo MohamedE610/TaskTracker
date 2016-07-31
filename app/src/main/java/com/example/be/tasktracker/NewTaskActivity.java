@@ -9,7 +9,7 @@ import com.example.be.tasktracker.DataModel.Project;
 import com.example.be.tasktracker.Services.NotificationService;
 import com.google.gson.Gson;
 
-public class NewTaskActivity extends AppCompatActivity implements ChooseProject.OnTaskStartListener {
+public class NewTaskActivity extends AppCompatActivity implements ChooseProject.OnSessionStartListener {
     final static String PROJECT_KEY = "KEY";
     private static final String STOPWATCH_TAG = "STOPWATCH_TAG";
     public static final String RESUME_STOPWATCH = "RESUME_STOPWATCH";
@@ -74,8 +74,8 @@ public class NewTaskActivity extends AppCompatActivity implements ChooseProject.
         Log.i("NewTaskActiviy", "onDestroyActivity");
     }
 
-    @Override
-    public void onTaskStarted(Project project, String s) {
+
+    public void onSessionStarted(Project project, String s) {
         getSupportFragmentManager().beginTransaction().replace(R.id.activity_new_task, produceStopwatchFragment(project, s), STOPWATCH_TAG).addToBackStack(null).commit();
     }
 

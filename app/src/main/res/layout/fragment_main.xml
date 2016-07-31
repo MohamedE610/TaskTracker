@@ -29,7 +29,7 @@
 
     <Button
         style="@style/ButtonStyle"
-        android:text="New Task"
+        android:text="New Session"
         android:id="@+id/load"
         />
 
