@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/TaskTracker.iml" filepath="$PROJECT_DIR$/TaskTracker.iml" />
       <module fileurl="file://$PROJECT_DIR$/TaskTrackerGit.iml" filepath="$PROJECT_DIR$/TaskTrackerGit.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
 </project>

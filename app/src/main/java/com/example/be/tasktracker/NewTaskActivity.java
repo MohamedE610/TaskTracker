@@ -1,5 +1,7 @@
 package com.example.be.tasktracker;
 
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -63,6 +65,7 @@ public class NewTaskActivity extends AppCompatActivity implements ChooseProject.
 
         if (goBack) {
             SessionController.destroy();
+            ((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE)).cancelAll();
             super.onBackPressed();
         }
 

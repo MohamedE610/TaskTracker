@@ -41,11 +41,11 @@ public class NotificationService extends Service {
     private static boolean alive = false;
     private StringBuilder stringBuilder;
     private NotificationThread mNotificationThread;
-    Intent playIntent ;
-    Intent stopIntent ;
+    Intent playIntent;
+    Intent stopIntent;
     Intent nextIntent;
-    Intent preIntent ;
-
+    Intent preIntent;
+    private NotificationCompat.Builder builder;
     private File file;
     private PendingIntent pendingPlayIntent;
     private PendingIntent pendingStopIntent;
@@ -73,44 +73,59 @@ public class NotificationService extends Service {
 
         if (mSessionController == null && SessionController.exists())
             mSessionController = SessionController.getInstance(null);
+
         action = intent.getAction();
         intializeIntents();
-        mNotificationThread = NotificationThread.getInstance(getBuilder(), this, mSessionController);
-        startForeground(NOTIFY_ID,getBuilder().build());
+        builder = getBuilder();
+        startForeground(NOTIFY_ID, builder.build());
         switch (action) {
-            case ServiceAction_START:
-                file = getFile();
-                alive = true;
 
-                if (!mSessionController.isWorking())
-                    mSessionController.setWorking(true);
-              //  startForeground(NOTIFY_ID);
-                mNotificationThread.start();
+            case ServiceAction_PREV:
+                mSessionController.setWorkingTask(((mSessionController.getWorkingTask() + mSessionController.getTasksCount() - 1) % mSessionController.getTasksCount()));
+                mSessionController.setWorking(false);
+                builder = getBuilder();
+                ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(
+                        NotificationService.NOTIFY_ID,
+                        builder.build());
                 break;
+
+            case ServiceAction_NEXT:
+                mSessionController.setWorkingTask(((mSessionController.getWorkingTask() + 1) % mSessionController.getTasksCount()));
+                mSessionController.setWorking(false);
+                builder = getBuilder();
+                ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(
+                        NotificationService.NOTIFY_ID,
+                        builder.build());
+                break;
+
             case ServiceAction_STOP_HIDE:
-                if (mNotificationThread != null && mNotificationThread.isAlive())
-                    mNotificationThread.interrupt();
-                alive = false;
-                if (mSessionController.isWorking())
-                    mSessionController.setWorking(false);
+                mSessionController.setWorking(false);
                 stopForeground(true);
                 ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NotificationService.NOTIFY_ID);
-                stopSelf();
+
 
                 break;
-            case ServiceAction_NEXT:
-                break;
-            case ServiceAction_PREV:
-                break;
-            case ServiceAction_CHOSED:
-            case ServiceAction_STOP:
-                if (mNotificationThread != null && mNotificationThread.isAlive())
+            case ServiceAction_START:
+                mNotificationThread = NotificationThread.getInstance(builder, this, mSessionController);
+             //   if(mNotificationThread.isNewInstance())
+
+                if (mNotificationThread.isAlive()) {
                     mNotificationThread.interrupt();
-                alive = false;
-                if (mSessionController.isWorking())
-                    mSessionController.setWorking(false);
+                    try {
+                        mNotificationThread.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    mNotificationThread = NotificationThread.getInstance(builder, this, mSessionController);
+                }
+                alive = true;
+                mSessionController.setWorking(true);
+                mNotificationThread.start();
+                break;
+
+            case ServiceAction_STOP:
+                mSessionController.setWorking(false);
                 stopForeground(false);
-                //stopSelf();
                 break;
 
         }
@@ -118,6 +133,7 @@ public class NotificationService extends Service {
         return START_NOT_STICKY;
         // return super.onStartCommand(intent, flags, startId);
     }
+
 
     private void intializeIntents() {
         playIntent = new Intent(this, NotificationService.class);
@@ -166,7 +182,7 @@ public class NotificationService extends Service {
             builder.addAction(R.drawable.stopnotification, null, pendingStopIntent);
         else
             builder.addAction(R.drawable.playnotification, null, pendingPlayIntent);
-        builder.addAction(R.drawable.nextnotification, null, pendingPlayIntent);
+        builder.addAction(R.drawable.nextnotification, null, pendingNextIntent);
         return builder;
 
 
@@ -194,6 +210,7 @@ public class NotificationService extends Service {
 }
 
 class NotificationThread extends Thread {
+    private static boolean newInstance;
     private NotificationManager mNotificationManager;
     boolean sleep = false;
     long sleepTime = 0;
@@ -202,10 +219,21 @@ class NotificationThread extends Thread {
     private static NotificationThread mNotificationThread;
     private NotificationService mNotificationService;
     private SessionController mSessionController;
+    private static boolean dead = true;
+
+    public static boolean isNewInstance() {
+        return newInstance;
+    }
 
     public static NotificationThread getInstance(NotificationCompat.Builder notifyBuilder, NotificationService service, SessionController sessionController) {
-        if (mNotificationThread == null)
+
+        if (mNotificationThread == null){
             mNotificationThread = new NotificationThread(notifyBuilder, service, sessionController);
+            newInstance=true;
+        }
+        else
+            newInstance=false;
+
         return mNotificationThread;
     }
 
@@ -222,11 +250,11 @@ class NotificationThread extends Thread {
 
     @Override
     public void run() {
-
+        dead = false;
         PowerManager pm = (PowerManager) mNotificationService.getSystemService(Context.POWER_SERVICE);
         try {
 
-            while (true) {
+            while (mSessionController.isWorking()) {
 
                 if (Build.VERSION.SDK_INT < 20) {
                     if (!pm.isScreenOn() && !sleep) {
@@ -251,20 +279,23 @@ class NotificationThread extends Thread {
 
                 }
                 Thread.sleep(1000);
-                mSessionController.increase(1);
-                mNotifyBuilder.setContentText(StopwatchFragment.convertSecsToText(mSessionController.getmSeconds()));
-                mNotificationManager.notify(
-                        NotificationService.NOTIFY_ID,
-                        mNotifyBuilder.build());
-
+                if (mSessionController.isWorking()) {
+                    mSessionController.increase(1);
+                    mNotifyBuilder.setContentText(StopwatchFragment.convertSecsToText(mSessionController.getmSeconds()));
+                    mNotificationManager.notify(
+                            NotificationService.NOTIFY_ID,
+                            mNotifyBuilder.build());
+                }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } finally {
             clear();
         }
     }
 
     private void clear() {
+        dead = true;
         mNotifyBuilder = null;
         mNotificationService = null;
         mSessionController = null;

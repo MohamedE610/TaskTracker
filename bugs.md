@@ -10,3 +10,5 @@
 - session date is too long
 - stopwatchfragment digit missing from date in mins
 - fix more than 20 session in statistics
+- switching betweend different sessions with different projects get you the previous
+ working task

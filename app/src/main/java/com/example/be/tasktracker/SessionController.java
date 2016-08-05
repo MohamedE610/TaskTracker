@@ -27,6 +27,9 @@ public  class SessionController{
         this.project=project;
         mSession=new Session(project);
         observers=new ArrayList<>();
+        working=false;
+        mSeconds=0;
+        workingTask=0;
         tasks=project.getTasks();
     }
     public void registerObserver(StopwatchObserver observer){
@@ -114,7 +117,7 @@ public  class SessionController{
                 observers.get(i).onSecondsIncreased(mSeconds);
         }
     }
-    public void setWorking(boolean working) {
+    synchronized public void setWorking(boolean working) {
         if(this.working==working)
             return;
         this.working = working;
@@ -140,6 +143,8 @@ public  class SessionController{
     public Project getProject() {
         return project;
     }
-
+    public int getTasksCount(){
+        return tasks.size();
+    }
 }
 

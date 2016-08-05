@@ -48,7 +48,6 @@ import java.util.TimeZone;
 public class StopwatchFragment extends Fragment implements StopwatchObserver {
     SessionController mSessionController;
     TextView runningTaskTv;
-    NotificationManager mNotificationManager;
     TextView timeTv;
     TextView[] listItems;
     Project project;
@@ -61,7 +60,8 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
     private boolean activityRecreated;
     TextView dateTV;
     boolean cancel;
-
+    int workingTask=0;
+    TextViewListener texViewListener = null;
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -112,7 +112,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
                     mSessionController.setSavedState(SessionController.SaveState.SAVED);
                     if (mSessionController.isWorking())
-                        mSessionController.setWorking(false);
+                       commandService(NotificationService.ServiceAction_STOP_HIDE);
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), "Error in Saving", Toast.LENGTH_SHORT).show();
                 }
@@ -121,20 +121,24 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
         controlBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mSessionController.setWorking((!mSessionController.isWorking()));
+                String command=mSessionController.isWorking()?NotificationService.ServiceAction_STOP_HIDE:NotificationService.ServiceAction_START;
+                commandService(command);
             }
         });
         hideKeyboard(getActivity());
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-        mNotificationManager =
-                (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+
         return rootView;
     }
 
     @Override
     public void onStart() {
         super.onStart();
+
         mSessionController.registerObserver(this);
+        syncActiveTaskView();
+
+
         if (mSessionController.isWorking()) {
             controlBtn.setActivated(true);
         }
@@ -160,8 +164,10 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
     }
 
 
-    public boolean onBackPressed() {
+    public boolean onBackPressed(){
         //if the session isn't saved/updated show confirmation dialog
+        if(mSessionController.isWorking())
+            commandService(NotificationService.ServiceAction_STOP_HIDE);
         switch (mSessionController.getSavedState()) {
             case NOT_SAVED:
                 showDialog("Do you want to save this session ? ");
@@ -187,7 +193,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
         int dpAsPixelsHeight = (int) (50 * scale + 0.5f);
         int dpAsPixelsWidth = (int) (140 * scale + 0.5f);
         LinearLayout linearLayout = (LinearLayout) rootView.findViewById(R.id.horiozontal_list);
-        TextViewListener texViewListener = null;
+
         for (int i = 0; i < listItems.length; i++) {
             listItems[i] = new TextView(getActivity());
             listItems[i].setText(tasks.get(i));
@@ -287,29 +293,31 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
         public void onClick(View v) {
             if (clickedView == v)
                 return;
-
             for (int i = 0; i < listItems.length; i++) {
                 if (listItems[i] == v) {
                     mSessionController.setWorkingTask(i);
                     break;
                 }
             }
-
-            clickedView.setSelected(false);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                clickedView.setTextColor(getResources().getColor(R.color.backgroundColor, null));
-                ((TextView) v).setTextColor(getResources().getColor(R.color.colorWhite, null));
-            } else {
-                clickedView.setTextColor(getResources().getColor(R.color.backgroundColor));
-                ((TextView) v).setTextColor(getResources().getColor(R.color.colorWhite));
-            }
-            clickedView = (TextView) v;
-            clickedView.setSelected(true);
-            runningTaskTv.setText(clickedView.getText().toString());
-            timeTv.setText(convertSecsToText(mSessionController.getmSession().getTasks().get(mSessionController.getWorkingTaskName())));
-
+           clickedView=performTaskChanged(v,clickedView);
         }
 
+    }
+
+    private TextView performTaskChanged(View v, TextView clickedView) {
+        clickedView.setSelected(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            clickedView.setTextColor(getResources().getColor(R.color.backgroundColor, null));
+            ((TextView) v).setTextColor(getResources().getColor(R.color.colorWhite, null));
+        } else {
+            clickedView.setTextColor(getResources().getColor(R.color.backgroundColor));
+            ((TextView) v).setTextColor(getResources().getColor(R.color.colorWhite));
+        }
+        clickedView = (TextView) v;
+        clickedView.setSelected(true);
+        runningTaskTv.setText(clickedView.getText().toString());
+        timeTv.setText(convertSecsToText(mSessionController.getmSession().getTasks().get(mSessionController.getWorkingTaskName())));
+        return clickedView;
     }
 
     public static void hideKeyboard(Context ctx) {
@@ -365,22 +373,32 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
 
     @Override
     public void onStopwatchStateChanged(boolean working) {
+        //workingTask=mSessionController.getWorkingTask();
         if (working) {
             controlBtn.setActivated(true);
             updateTimeTextView();
-            //startService
-            Intent startIntent = new Intent(getActivity(), NotificationService.class);
-            startIntent.setAction(NotificationService.ServiceAction_START);
-            //startIntent.put
-            getActivity().startService(startIntent);
+            commandService(NotificationService.ServiceAction_START);
         } else {
             controlBtn.setActivated(false);
-            //  updateTimeTextView();
-            Intent stopIntent = new Intent(getActivity(), NotificationService.class);
-            stopIntent.setAction(NotificationService.ServiceAction_STOP_HIDE);
-            getActivity().startService(stopIntent);
+            commandService(NotificationService.ServiceAction_STOP_HIDE);
 
-            //stopService
+
+        }
+        syncActiveTaskView();
+
+    }
+
+
+    private void commandService(String serviceAction_stop_hide) {
+        Intent stopIntent = new Intent(getActivity(), NotificationService.class);
+        stopIntent.setAction(serviceAction_stop_hide);
+        getActivity().startService(stopIntent);
+    }
+
+    private void syncActiveTaskView() {
+        if(mSessionController.getWorkingTask()!=workingTask){
+            workingTask=mSessionController.getWorkingTask();
+            texViewListener.clickedView=performTaskChanged(listItems[workingTask],texViewListener.clickedView);
         }
     }
 
