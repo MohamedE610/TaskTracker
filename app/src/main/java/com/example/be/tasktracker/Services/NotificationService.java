@@ -33,6 +33,7 @@ public class NotificationService extends Service {
     public static final int NOTIFY_ID = 1;
     final int NOTIFY_FORGROUND_ID = 2;
     public static final String ServiceAction_START = "START";
+    public static final String ServiceAction_START_FROM_NOTIF = "START_NOTIF";
     public static final String ServiceAction_STOP_HIDE = "STOP_HIDE";
     public static final String ServiceAction_STOP = "STOP";
     public static final String ServiceAction_NEXT = "NEXT";
@@ -71,7 +72,7 @@ public class NotificationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
 
-        if (mSessionController == null && SessionController.exists())
+        if (SessionController.exists())
             mSessionController = SessionController.getInstance(null);
 
         action = intent.getAction();
@@ -87,6 +88,7 @@ public class NotificationService extends Service {
                 ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(
                         NotificationService.NOTIFY_ID,
                         builder.build());
+             //   stopSelf();
                 break;
 
             case ServiceAction_NEXT:
@@ -96,13 +98,14 @@ public class NotificationService extends Service {
                 ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(
                         NotificationService.NOTIFY_ID,
                         builder.build());
+             //   stopSelf();
                 break;
 
             case ServiceAction_STOP_HIDE:
-                mSessionController.setWorking(false);
+              //  mSessionController.setWorking(false);
                 stopForeground(true);
                 ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NotificationService.NOTIFY_ID);
-
+                stopSelf();
 
                 break;
             case ServiceAction_START:
@@ -119,13 +122,14 @@ public class NotificationService extends Service {
                     mNotificationThread = NotificationThread.getInstance(builder, this, mSessionController);
                 }
                 alive = true;
-                mSessionController.setWorking(true);
+               if(!mSessionController.isWorking())
+                   mSessionController.setWorking(true);
                 mNotificationThread.start();
                 break;
 
             case ServiceAction_STOP:
                 mSessionController.setWorking(false);
-                stopForeground(false);
+             //   stopSelf();
                 break;
 
         }
@@ -193,6 +197,7 @@ public class NotificationService extends Service {
     public void onDestroy() {
         super.onDestroy();
         alive = false;
+        mSessionController=null;
     }
 
     public File getFile() {

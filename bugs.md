@@ -7,8 +7,8 @@
 - rotate on statistics activity (fixed)
 - rotate on create project (fixed)
 - backpressed when App is resumed strange behavior (fixed)
+- switching between different sessions with different projects get you the previous
+ working task (fixed)
 - session date is too long
 - stopwatchfragment digit missing from date in mins
 - fix more than 20 session in statistics
-- switching betweend different sessions with different projects get you the previous
- working task

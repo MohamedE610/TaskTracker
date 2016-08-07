@@ -112,7 +112,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
                     Toast.makeText(getActivity().getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
                     mSessionController.setSavedState(SessionController.SaveState.SAVED);
                     if (mSessionController.isWorking())
-                       commandService(NotificationService.ServiceAction_STOP_HIDE);
+                      mSessionController.setWorking(false);
                 } else {
                     Toast.makeText(getActivity().getApplicationContext(), "Error in Saving", Toast.LENGTH_SHORT).show();
                 }
@@ -121,8 +121,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
         controlBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String command=mSessionController.isWorking()?NotificationService.ServiceAction_STOP_HIDE:NotificationService.ServiceAction_START;
-                commandService(command);
+                mSessionController.setWorking(!mSessionController.isWorking());
             }
         });
         hideKeyboard(getActivity());
@@ -141,7 +140,13 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
 
         if (mSessionController.isWorking()) {
             controlBtn.setActivated(true);
+        }//if activity is recreated and notification is still hanging there
+        else if(NotificationService.isAlive()){
+            commandService(NotificationService.ServiceAction_STOP_HIDE);
+            controlBtn.setActivated(false);
         }
+
+
         activityRecreated = false;  //commented
     }
 
@@ -167,7 +172,7 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
     public boolean onBackPressed(){
         //if the session isn't saved/updated show confirmation dialog
         if(mSessionController.isWorking())
-            commandService(NotificationService.ServiceAction_STOP_HIDE);
+            mSessionController.setWorking(false);
         switch (mSessionController.getSavedState()) {
             case NOT_SAVED:
                 showDialog("Do you want to save this session ? ");
@@ -389,9 +394,9 @@ public class StopwatchFragment extends Fragment implements StopwatchObserver {
     }
 
 
-    private void commandService(String serviceAction_stop_hide) {
+    private void commandService(String serviceAction) {
         Intent stopIntent = new Intent(getActivity(), NotificationService.class);
-        stopIntent.setAction(serviceAction_stop_hide);
+        stopIntent.setAction(serviceAction);
         getActivity().startService(stopIntent);
     }
 
